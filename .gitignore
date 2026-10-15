@@ -1,0 +1,36 @@
+# Herramientas publicadas: index.html y las carpetas de cada aplicación.
+# El hub incluye estilos, scripts, fuentes y portada dentro de index.html.
+
+# Contexto, comprobaciones y material de trabajo local
+/documentation/
+/work/
+/outputs/
+/.impeccable/
+/screenshots/
+/test-results/
+/playwright-report/
+/coverage/
+
+# Dependencias y cachés
+node_modules/
+__pycache__/
+*.py[cod]
+.cache/
+.pytest_cache/
+
+# Configuración local y credenciales
+.env
+.env.*
+!.env.example
+.vscode/
+.idea/
+
+# Copias y paquetes
+*.zip
+*.log
+*.tmp
+*.bak
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
