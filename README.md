@@ -8,7 +8,7 @@ y las aplicaciones, cada una en su propia carpeta.
 ## Contenido
 
 - `index.html`: hub autocontenido, con CSS, JavaScript, catálogo, fuentes,
-  licencias y captura real de la aplicación incrustados.
+  licencias, favicon y captura real de la aplicación incrustados.
 - `estatica_maquinas/index.html`: nueva versión del Taller de Estática facilitada
   por David, con temas claro/oscuro y enlace de regreso al hub.
 - `.nojekyll`: sirve los archivos directamente en GitHub Pages.
@@ -63,4 +63,4 @@ corresponde al despliegue real; un servidor aislado del hub no incluye el portaf
 La búsqueda, idiomas y catálogo funcionan en el navegador. Sin JavaScript se
 mantiene el enlace directo al Taller de Estática.
 
-El hub y el Taller de Estática usan el favicon común del portafolio, en `/assets/favicon.svg`. Se comparte el mismo archivo en todo el sitio.
+El hub y el Taller de Estática incluyen el mismo favicon del portafolio incrustado en sus HTML. No requieren una carpeta assets ni un archivo de favicon externo.
