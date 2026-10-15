@@ -1,0 +1,1874 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Taller de Estática</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Concepto: mesa de dibujo técnico. Papel cuadriculado, tinta oscura, fuerzas en naranja, reacciones en verde azulado. Herramientas a la izquierda, propiedades a la derecha. */
+:root{
+  --bg:#ECEEE8; --panel:#F8F8F4; --panel2:#EEF0E9; --ink:#16202A; --muted:#5B6872; --line:#C9D0C8;
+  --accent:#0A6B66; --accent-ink:#FFFFFF; --accent-soft:#D6EBE8;
+  --cv-bg:#FCFCF9; --grid:#E6EAE3; --grid-major:#CFD6CD;
+  --load:#B4440A; --react:#0A7A72; --tension:#1D4ED8; --compress:#C81E1E; --sel:#E59A00; --dim:#4B5B68;
+  --node-fill:#FFFFFF; --support:#D6DCD4;
+  --ok:#14663C; --ok-bg:#DDF2E4; --warn:#8A5200; --warn-bg:#FFF1CF; --bad:#A8231B; --bad-bg:#FCE3DF;
+  --font-ui:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E151B; --panel:#151F27; --panel2:#1B2731; --ink:#E5ECF1; --muted:#97A5B0; --line:#2B3A46;
+  --accent:#3CC4B9; --accent-ink:#06201E; --accent-soft:#17383A;
+  --cv-bg:#111A21; --grid:#1A2630; --grid-major:#26343F;
+  --load:#FB923C; --react:#2DD4BF; --tension:#6AA6FF; --compress:#FF7B7B; --sel:#FACC15; --dim:#A9B8C4;
+  --node-fill:#111A21; --support:#2B3A46;
+  --ok:#6EE7A0; --ok-bg:#12301F; --warn:#FFD27A; --warn-bg:#3A2A0B; --bad:#FF9C93; --bad-bg:#401A17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E151B; --panel:#151F27; --panel2:#1B2731; --ink:#E5ECF1; --muted:#97A5B0; --line:#2B3A46;
+  --accent:#3CC4B9; --accent-ink:#06201E; --accent-soft:#17383A;
+  --cv-bg:#111A21; --grid:#1A2630; --grid-major:#26343F;
+  --load:#FB923C; --react:#2DD4BF; --tension:#6AA6FF; --compress:#FF7B7B; --sel:#FACC15; --dim:#A9B8C4;
+  --node-fill:#111A21; --support:#2B3A46;
+  --ok:#6EE7A0; --ok-bg:#12301F; --warn:#FFD27A; --warn-bg:#3A2A0B; --bad:#FF9C93; --bad-bg:#401A17; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.4 var(--font-ui);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 48px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px;margin-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand svg{flex:none;color:var(--accent)}
+.brand h1{margin:0;font-size:21px;font-weight:700;letter-spacing:.01em;text-wrap:balance}
+.brand small{display:block;color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:6px 10px;cursor:pointer;line-height:1.2;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;padding:7px 14px}
+.btn.small{padding:3px 8px;font-size:13px}
+.btn.danger{color:var(--bad)}
+select.btn{padding-right:4px}
+
+.work{display:grid;grid-template-columns:52px minmax(0,1fr) 340px;gap:10px;height:clamp(540px,calc(100svh - 110px),880px)}
+.tools{display:flex;flex-direction:column;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px;overflow-y:auto}
+.tool{position:relative;width:38px;height:38px;flex:none;display:grid;place-items:center;border:1px solid transparent;border-radius:6px;background:none;cursor:pointer;color:var(--ink)}
+.tool:hover{background:var(--panel2)}
+.tool[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tool kbd{position:absolute;right:2px;bottom:0;font:500 9px var(--font-num);opacity:.6}
+.tsep{height:1px;background:var(--line);margin:3px 4px;flex:none}
+
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0;gap:6px}
+.snapbar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px}
+.snapbar label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.snapbar select{border:1px solid var(--line);background:var(--panel2);border-radius:4px;padding:1px 2px}
+.canvas-wrap{position:relative;flex:1;min-height:340px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--cv-bg)}
+#cv{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.hint{position:absolute;left:10px;bottom:8px;right:120px;pointer-events:none;font-size:13px;color:var(--muted);text-shadow:0 0 4px var(--cv-bg),0 0 4px var(--cv-bg)}
+.zoom{position:absolute;right:8px;bottom:8px;display:flex;gap:4px}
+.zoom .btn{padding:4px 9px}
+.toast{position:absolute;left:50%;top:10px;transform:translateX(-50%);max-width:90%;padding:7px 12px;border-radius:6px;background:var(--ink);color:var(--bg);font-size:13px;pointer-events:none;opacity:0;transition:opacity .2s}
+.toast.show{opacity:.96}
+
+.side{display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--line);flex:none}
+.tab{flex:1;padding:9px 6px;border:0;background:var(--panel2);cursor:pointer;font-weight:600;letter-spacing:.03em;border-right:1px solid var(--line)}
+.tab:last-child{border-right:0}
+.tab[aria-selected="true"]{background:var(--panel);box-shadow:inset 0 -3px 0 var(--accent)}
+.pane{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.pane[hidden]{display:none}
+.sec h3{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f{display:flex;flex-direction:column;gap:2px;min-width:0}
+.f>span{font-size:12px;color:var(--muted)}
+.f input,.f select,.f textarea{width:100%;min-width:0;border:1px solid var(--line);background:var(--cv-bg);border-radius:5px;padding:5px 7px;font-family:var(--font-num);font-size:13px}
+.f textarea{font-family:var(--font-ui);font-size:14px;resize:vertical}
+.f.chk{flex-direction:row;align-items:center;gap:6px}
+.f.chk span{font-size:14px;color:var(--ink)}
+.f.chk input{width:auto}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.empty{color:var(--muted);font-size:13px;margin:0}
+.glist{display:flex;flex-direction:column;gap:6px}
+.grow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:end}
+.card{border:1px solid var(--line);border-radius:6px;background:var(--panel2);padding:9px 10px}
+.card.stmt{font-size:14.5px;line-height:1.5;white-space:pre-wrap;background:var(--cv-bg)}
+.msg{border-radius:6px;padding:7px 10px;font-size:13.5px}
+.msg.ok{background:var(--ok-bg);color:var(--ok)}
+.msg.warn{background:var(--warn-bg);color:var(--warn)}
+.msg.bad{background:var(--bad-bg);color:var(--bad)}
+.msgs{display:flex;flex-direction:column;gap:6px}
+.msg ul{margin:4px 0 0;padding-left:18px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)}
+table.res{width:100%;border-collapse:collapse;font-size:13px}
+table.res th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--line)}
+table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.tc{font-family:var(--font-ui);font-weight:700;font-size:12px}
+.tc.t{color:var(--tension)}.tc.c{color:var(--compress)}
+.answer{font-family:var(--font-num);font-size:13px;line-height:1.7}
+.answer b{font-family:var(--font-ui);font-size:14px}
+
+.results{margin-top:18px}
+.results h2{margin:0 0 4px;font-size:19px}
+.results p.lead{margin:0 0 12px;color:var(--muted);max-width:70ch}
+.fbd-sub{margin:18px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fbd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.fbd-grid.wide{grid-template-columns:repeat(auto-fill,minmax(min(100%,520px),1fr))}
+.fbd-card{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--cv-bg);min-width:0}
+.fbd-card canvas{display:block;width:100%;height:auto}
+
+.modal{position:fixed;inset:0;z-index:20;background:rgba(10,16,20,.72);display:grid;place-items:center;padding:16px}
+.modal[hidden]{display:none}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:min(960px,100%);max-height:100%;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.modal img{max-width:100%;height:auto;background:#fff;border-radius:4px}
+.modal textarea{width:100%;min-height:200px;font-family:var(--font-num);font-size:12px}
+
+@media (max-width:900px){
+  .work{grid-template-columns:minmax(0,1fr);height:auto}
+  .tools{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .tsep{width:1px;height:auto;margin:4px 3px}
+  .canvas-wrap{flex:none;height:min(62svh,560px);min-height:360px}
+  .side{max-height:none}
+  .pane{overflow:visible}
+  .hint{right:100px}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 28 17 6l13 22Z"/><path d="M10.5 17h13M4 28h26"/><circle cx="17" cy="6" r="2.4" fill="var(--panel)"/><circle cx="4" cy="28" r="2.4" fill="var(--panel)"/><circle cx="30" cy="28" r="2.4" fill="var(--panel)"/></svg>
+    <div><h1>Taller de Estática</h1><small>Barras, nudos, fuerzas y sólidos libres</small></div>
+  </div>
+  <div class="actions">
+    <select class="btn" id="lang" aria-label="Idioma" data-notr><option value="es">Castellano</option><option value="ca">Català</option><option value="en">English</option></select>
+    <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
+    <button class="btn" id="redo" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
+    <select class="btn" id="examples" aria-label="Ejemplos">
+      <option value="">Ejemplos…</option>
+      <option value="warren">Cercha Warren (7 barras)</option>
+      <option value="grua">Pescante con cable</option>
+      <option value="triangulo">Triángulo equilátero</option>
+      <option value="hiper">Hiperestática (aviso)</option>
+    </select>
+    <button class="btn" id="btnNew">Nuevo</button>
+    <button class="btn" id="btnSave">Guardar .json</button>
+    <button class="btn" id="btnOpen">Abrir</button>
+    <input type="file" id="fileIn" accept=".json,application/json" hidden>
+    <button class="btn" id="btnPng">PNG del esquema</button>
+    <button class="btn" id="btnSheet">PNG de la hoja</button>
+    <button class="btn primary" id="btnCalc">Calcular</button>
+  </div>
+</header>
+
+<main class="work">
+  <nav class="tools" id="tools" aria-label="Herramientas"></nav>
+  <section class="stage">
+    <div class="snapbar" id="snapbar">
+      <label><input type="checkbox" id="sGrid"> Rejilla</label>
+      <label>Paso <select id="sStep"><option value="0.1">0,1 m</option><option value="0.25">0,25 m</option><option value="0.5">0,5 m</option><option value="1">1 m</option></select></label>
+      <label>Ángulo <select id="sAng"><option value="0">libre</option><option value="15">15°</option><option value="30">30°</option><option value="45">45°</option><option value="90">90°</option></select></label>
+      <label><input type="checkbox" id="sRel"> Relativo a barras</label>
+      <label><input type="checkbox" id="sLen"> Imán a longitudes base</label>
+      <label><input type="checkbox" id="sShowLen"> Mostrar longitudes</label>
+    </div>
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="cv" aria-label="Lienzo de dibujo"></canvas>
+      <div class="hint" id="hint"></div>
+      <div class="toast" id="toast" role="status"></div>
+      <div class="zoom"><button class="btn" id="zOut" title="Alejar">−</button><button class="btn" id="zFit" title="Ajustar a la vista">Ajustar</button><button class="btn" id="zIn" title="Acercar">+</button></div>
+    </div>
+  </section>
+  <aside class="side">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabProps" aria-selected="true">Propiedades</button>
+      <button class="tab" role="tab" id="tabRes" aria-selected="false">Resultados</button>
+    </div>
+    <div class="pane" id="paneProps">
+      <div class="sec"><h3>Selección</h3><div id="inspector"></div></div>
+      <div class="sec"><h3>Longitudes base</h3><p class="empty" style="margin-bottom:6px">Define una medida (por ejemplo L1 = 1 m). Las barras con esa referencia miden siempre lo mismo.</p><div class="glist" id="groups"></div><div class="btns" style="margin-top:8px"><button class="btn small" id="addGroup">+ Nueva longitud base</button></div></div>
+      <div class="sec"><h3>Cables</h3><p class="empty" style="margin-bottom:6px">Marca una barra como cable para calcular su diámetro. Indica σadm, o bien fy y el coeficiente de seguridad n (σadm = fy / n).</p>
+        <div class="row"><label class="f"><span>σadm (MPa)</span><input id="cSigma" type="number" step="any" min="0" placeholder="p. ej. 150"></label><span></span>
+        <label class="f"><span>fy (MPa)</span><input id="cFy" type="number" step="any" min="0" placeholder="p. ej. 235"></label><label class="f"><span>n (seguridad)</span><input id="cN" type="number" step="any" min="0" placeholder="p. ej. 1,5"></label></div></div>
+    </div>
+    <div class="pane" id="paneRes" hidden><div id="resBox"><p class="empty">Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres.</p></div></div>
+  </aside>
+</main>
+
+<section class="results" id="results" hidden>
+  <h2>Diagramas de sólido libre</h2>
+  <p class="lead">Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. Las flechas parten del punto donde se aplica la fuerza. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.</p>
+  <h3 class="fbd-sub">Estructura completa</h3><div class="fbd-grid wide" id="fbdStruct"></div>
+  <h3 class="fbd-sub">Nudos</h3><div class="fbd-grid" id="fbdNodes"></div>
+  <h3 class="fbd-sub">Barras</h3><div class="fbd-grid" id="fbdBars"></div>
+</section>
+
+<div class="modal" id="modal" hidden><div class="box" id="modalBox"></div></div>
+
+<script>
+/* Diccionario: clave en castellano -> [catalán, inglés]. Se aplica por fragmentos, de la clave más larga a la más corta. */
+var I18N_DICT = [
+  /* ---- Cabecera y barras ---- */
+  ['Taller de Estática', "Taller d'Estàtica", 'Statics Workshop'],
+  ['Barras, nudos, fuerzas y sólidos libres', 'Barres, nusos, forces i sòlids lliures', 'Bars, joints, forces and free-body diagrams'],
+  ['↶ Deshacer', '↶ Desfés', '↶ Undo'], ['↷ Rehacer', '↷ Refés', '↷ Redo'],
+  ['Deshacer (Ctrl+Z)', 'Desfés (Ctrl+Z)', 'Undo (Ctrl+Z)'], ['Rehacer (Ctrl+Y)', 'Refés (Ctrl+Y)', 'Redo (Ctrl+Y)'],
+  ['Ejemplos…', 'Exemples…', 'Examples…'], ['Ejemplos', 'Exemples', 'Examples'],
+  ['Cercha Warren (7 barras)', 'Encavallada Warren (7 barres)', 'Warren truss (7 bars)'],
+  ['Pescante con cable', 'Pescant amb cable', 'Jib with cable'],
+  ['Triángulo equilátero', 'Triangle equilàter', 'Equilateral triangle'],
+  ['Hiperestática (aviso)', 'Hiperestàtica (avís)', 'Indeterminate (warning)'],
+  ['Nuevo', 'Nou', 'New'], ['Guardar .json', 'Desa .json', 'Save .json'], ['Abrir', 'Obre', 'Open'],
+  ['PNG del esquema', "PNG de l'esquema", 'Diagram PNG'], ['PNG de la hoja', 'PNG del full', 'Sheet PNG'],
+  ['Calcular', 'Calcula', 'Calculate'], ['Idioma', 'Idioma', 'Language'],
+  ['Herramientas', 'Eines', 'Tools'], ['Lienzo de dibujo', 'Llenç de dibuix', 'Drawing canvas'],
+  ['Rejilla', 'Quadrícula', 'Grid'], ['Paso', 'Pas', 'Step'], ['Ángulo', 'Angle', 'Angle'], ['libre', 'lliure', 'free'],
+  ['Relativo a barras', 'Relatiu a barres', 'Relative to bars'],
+  ['Imán a longitudes base', 'Imant a longituds base', 'Snap to base lengths'],
+  ['Mostrar longitudes', 'Mostra longituds', 'Show lengths'],
+  ['Ajustar a la vista', 'Ajusta a la vista', 'Fit to view'], ['Ajustar', 'Ajusta', 'Fit'],
+  ['Alejar', 'Allunya', 'Zoom out'], ['Acercar', 'Apropa', 'Zoom in'],
+  ['Propiedades', 'Propietats', 'Properties'], ['Resultados', 'Resultats', 'Results'],
+  ['Selección', 'Selecció', 'Selection'], ['Longitudes base', 'Longituds base', 'Base lengths'],
+  ['Define una medida (por ejemplo L1 = 1 m). Las barras con esa referencia miden siempre lo mismo.', 'Defineix una mesura (per exemple L1 = 1 m). Les barres amb aquesta referència mesuren sempre el mateix.', 'Define a measurement (for example L1 = 1 m). Bars with that reference always have the same length.'],
+  ['+ Nueva longitud base', '+ Nova longitud base', '+ New base length'],
+  ['Marca una barra como cable para calcular su diámetro. Indica σadm, o bien fy y el coeficiente de seguridad n (σadm = fy / n).', 'Marca una barra com a cable per calcular-ne el diàmetre. Indica σadm, o bé fy i el coeficient de seguretat n (σadm = fy / n).', 'Mark a bar as a cable to calculate its diameter. Enter σadm, or fy and the safety factor n (σadm = fy / n).'],
+  ['n (seguridad)', 'n (seguretat)', 'n (safety)'],
+  ['p. ej. 150', 'p. ex. 150', 'e.g. 150'], ['p. ej. 235', 'p. ex. 235', 'e.g. 235'], ['p. ej. 1,5', 'p. ex. 1,5', 'e.g. 1.5'],
+  ['Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres. Si falta algún dato, el programa te dirá cuál.', 'Prem «Calcula» per obtenir reaccions, esforços en barres i els sòlids lliures. Si falta alguna dada, el programa t\'ho dirà.', 'Press “Calculate” to get reactions, bar forces and the free-body diagrams. If any data is missing, the program will tell you which.'],
+  ['Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres.', 'Prem «Calcula» per obtenir reaccions, esforços en barres i els sòlids lliures.', 'Press “Calculate” to get reactions, bar forces and the free-body diagrams.'],
+  ['Diagramas de sólido libre', 'Diagrames de sòlid lliure', 'Free-body diagrams'],
+  ['Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. Las flechas parten del punto donde se aplica la fuerza. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.', 'Cada nus i cada barra s\'aïlla amb les forces que hi actuen. Les fletxes surten del punt on s\'aplica la força. Blau: tracció. Vermell: compressió. Taronja: càrregues. Verd: reaccions.', 'Each joint and each bar is isolated with the forces acting on it. Arrows start at the point where the force is applied. Blue: tension. Red: compression. Orange: loads. Green: reactions.'],
+  ['Estructura completa', 'Estructura completa', 'Whole structure'],
+  ['Nudos', 'Nusos', 'Joints'], ['Barras', 'Barres', 'Bars'],
+
+  /* ---- Herramientas y pistas ---- */
+  ['Seleccionar y mover', 'Selecciona i mou', 'Select and move'], ['Mover la vista', 'Mou la vista', 'Pan the view'],
+  ['Nudo', 'Nus', 'Joint'], ['Barra', 'Barra', 'Bar'], ['Apoyo fijo', 'Suport fix', 'Pinned support'], ['Apoyo móvil', 'Suport mòbil', 'Roller support'],
+  ['Fuerza', 'Força', 'Force'], ['Peso (masa)', 'Pes (massa)', 'Weight (mass)'],
+  ['Cota de distancia', 'Cota de distància', 'Distance dimension'], ['Cota de ángulo', "Cota d'angle", 'Angle dimension'], ['Borrar', 'Esborra', 'Delete'],
+  ['Clic para seleccionar. Arrastra un nudo para moverlo, o el fondo para desplazar la vista. Rueda: zoom.', 'Clic per seleccionar. Arrossega un nus per moure\'l, o el fons per desplaçar la vista. Roda: zoom.', 'Click to select. Drag a joint to move it, or the background to pan. Wheel: zoom.'],
+  ['Arrastra para desplazar la vista.', 'Arrossega per desplaçar la vista.', 'Drag to pan the view.'],
+  ['Clic en el lienzo para colocar un nudo.', 'Clic al llenç per col·locar un nus.', 'Click on the canvas to place a joint.'],
+  ['Clic para fijar el otro extremo. Esc o clic derecho para terminar la cadena.', "Clic per fixar l'altre extrem. Esc o clic dret per acabar la cadena.", 'Click to set the other end. Esc or right-click to end the chain.'],
+  ['Arrastra entre dos puntos, o haz clic en el inicio y luego en el final. Se unen solos a los nudos cercanos.', 'Arrossega entre dos punts, o fes clic a l\'inici i després al final. S\'uneixen sols als nusos propers.', 'Drag between two points, or click the start and then the end. They attach to nearby joints automatically.'],
+  ['Clic en un nudo para colocar un apoyo fijo. Otro clic lo quita.', 'Clic en un nus per col·locar un suport fix. Un altre clic el treu.', 'Click a joint to place a pinned support. Click again to remove it.'],
+  ['Clic en un nudo para colocar un apoyo móvil. Otro clic lo quita.', 'Clic en un nus per col·locar un suport mòbil. Un altre clic el treu.', 'Click a joint to place a roller support. Click again to remove it.'],
+  ['Clic en un nudo para aplicar una fuerza. Ajusta valor y ángulo en Propiedades.', 'Clic en un nus per aplicar una força. Ajusta valor i angle a Propietats.', 'Click a joint to apply a force. Adjust value and angle in Properties.'],
+  ['Clic en un nudo para colgar una masa (peso = m·g).', 'Clic en un nus per penjar una massa (pes = m·g).', 'Click a joint to hang a mass (weight = m·g).'],
+  ['Clic en el segundo nudo.', 'Clic al segon nus.', 'Click the second joint.'],
+  ['Clic en un nudo y luego en otro para acotar la distancia.', 'Clic en un nus i després en un altre per acotar la distància.', 'Click a joint and then another to dimension the distance.'],
+  ['Clic en otra barra del mismo nudo, o en un espacio vacío para medir con la horizontal.', 'Clic en una altra barra del mateix nus, o en un espai buit per mesurar amb l\'horitzontal.', 'Click another bar at the same joint, or an empty space to measure against the horizontal.'],
+  ['Clic en una barra y luego en otra que comparta nudo.', 'Clic en una barra i després en una altra que comparteixi nus.', 'Click a bar and then another bar sharing the joint.'],
+  ['Clic en un elemento para borrarlo.', 'Clic en un element per esborrar-lo.', 'Click an element to delete it.'],
+  ['Ahí ya hay un nudo.', 'Allà ja hi ha un nus.', 'There is already a joint there.'],
+  ['Haz clic sobre un nudo.', 'Fes clic sobre un nus.', 'Click on a joint.'],
+  ['Elige el segundo nudo', 'Tria el segon nus', 'Choose the second joint'],
+  ['Esa cota ya existe.', 'Aquesta cota ja existeix.', 'That dimension already exists.'],
+  ['Haz clic sobre una barra.', 'Fes clic sobre una barra.', 'Click on a bar.'],
+  ['Ahora otra barra del nudo ', 'Ara una altra barra del nus ', 'Now another bar at joint '],
+  [', o un espacio vacío', ', o un espai buit', ', or an empty space'],
+  ['Esa barra no comparte el nudo ', 'Aquesta barra no comparteix el nus ', 'That bar does not share joint '],
+  ['Ese nombre ya existe o está vacío.', 'Aquest nom ja existeix o és buit.', 'That name already exists or is empty.'],
+
+  /* ---- Inspector ---- */
+  ['Nada seleccionado. Elige un nudo, una barra, una fuerza o una cota para editar sus medidas.', 'Res seleccionat. Tria un nus, una barra, una força o una cota per editar-ne les mesures.', 'Nothing selected. Pick a joint, bar, force or dimension to edit its values.'],
+  ['>Fijo (articulación)<', '>Fix (articulació)<', '>Pinned (hinge)<'], ['>Móvil (rodillo)<', '>Mòbil (corró)<', '>Roller<'],
+  ['>Sin apoyo<', '>Sense suport<', '>No support<'], ['>Apoyo<', '>Suport<', '>Support<'],
+  ['+ Fuerza', '+ Força', '+ Force'], ['+ Peso', '+ Pes', '+ Weight'], ['>Eliminar<', '>Elimina<', '>Delete<'],
+  ['Dirección de la reacción del móvil (°)', 'Direcció de la reacció del mòbil (°)', 'Roller reaction direction (°)'],
+  ['Orientación del dibujo del apoyo (°)', 'Orientació del dibuix del suport (°)', 'Support drawing orientation (°)'],
+  ['Longitud (m)', 'Longitud (m)', 'Length (m)'], ['Ángulo (° desde +x)', 'Angle (° des de +x)', 'Angle (° from +x)'],
+  ['>Longitud base<', '>Longitud base<', '>Base length<'],
+  ['Sin referencia (se calcula)', 'Sense referència (es calcula)', 'No reference (calculated)'],
+  ['Nueva base con esta longitud', 'Nova base amb aquesta longitud', 'New base with this length'],
+  ['Igualar su longitud a la de…', 'Iguala la longitud a la de…', 'Make its length equal to…'],
+  ['Es un cable (solo tracción)', 'És un cable (només tracció)', 'It is a cable (tension only)'],
+  ['en el nudo ', 'al nus ', 'at joint '],
+  ['>Tipo<', '>Tipus<', '>Type<'], ['>Fuerza<', '>Força<', '>Force<'], ['>Peso de una masa<', '>Pes d\'una massa<', '>Weight of a mass<'],
+  ['Mostrar el valor (kN) en el dibujo', 'Mostra el valor (kN) al dibuix', 'Show the value (kN) in the drawing'],
+  ['Masa (kg)', 'Massa (kg)', 'Mass (kg)'], ['Valor (kN)', 'Valor (kN)', 'Value (kN)'], ['Ángulo (°)', 'Angle (°)', 'Angle (°)'],
+  ['P = m·g con g = 9,81 m/s² = ', 'P = m·g amb g = 9,81 m/s² = ', 'P = m·g with g = 9.81 m/s² = '],
+  [' kN, vertical hacia abajo.', ' kN, vertical cap avall.', ' kN, vertically downwards.'],
+  ['0° derecha, 90° arriba, 180° izquierda, 270° abajo. También puedes arrastrar la punta de la flecha.', '0° dreta, 90° amunt, 180° esquerra, 270° avall. També pots arrossegar la punta de la fletxa.', '0° right, 90° up, 180° left, 270° down. You can also drag the arrow tip.'],
+  ['Sin dato (para probar el aviso de datos que faltan)', 'Sense dada (per provar l\'avís de dades que falten)', 'No data (to test the missing-data warning)'],
+  ['Cota ', 'Cota ', 'Dimension '], ['Distancia (m)', 'Distància (m)', 'Distance (m)'], ['Separación de la cota (m)', 'Separació de la cota (m)', 'Dimension offset (m)'],
+  ['Cambiar la distancia mueve el nudo ', 'Canviar la distància mou el nus ', 'Changing the distance moves joint '],
+  ['. Si hay una barra entre ambos, se ajusta su longitud.', '. Si hi ha una barra entre tots dos, s\'ajusta la seva longitud.', '. If there is a bar between them, its length is adjusted.'],
+  ['Ángulo en el nudo ', 'Angle al nus ', 'Angle at joint '], 
+  ['Entre {0} y {1} (°)', 'Entre {0} i {1} (°)', 'Between {0} and {1} (°)'],
+  ['De {0} con la horizontal (°)', 'De {0} amb l\'horitzontal (°)', 'From {0} with the horizontal (°)'],
+  ['Distancia del arco al nudo (px)', 'Distància de l\'arc al nus (px)', 'Arc distance from joint (px)'],
+  ['También puedes arrastrar la cota del ángulo para alejarla o acercarla. Cambiar el valor gira ', 'També pots arrossegar la cota de l\'angle per allunyar-la o apropar-la. Canviar el valor gira ', 'You can also drag the angle dimension to move it away or closer. Changing the value rotates '],
+  ['la barra ', 'la barra ', 'bar '], [' alrededor del nudo ', ' al voltant del nus ', ' around joint '], [', manteniendo su longitud.', ', mantenint-ne la longitud.', ', keeping its length.'],
+  ['Todavía no hay longitudes base. Las longitudes se calculan a partir de la geometría.', 'Encara no hi ha longituds base. Les longituds es calculen a partir de la geometria.', 'There are no base lengths yet. Lengths are calculated from the geometry.'],
+  ['Nombre (', 'Nom (', 'Name ('], [' barras)', ' barres)', ' bars)'], [' barra)', ' barra)', ' bar)'],
+  ['Quitar esta longitud base', 'Treu aquesta longitud base', 'Remove this base length'],
+
+  /* ---- Resultados ---- */
+  ['Isostática', 'Isostàtica', 'Statically determinate'], ['Hiperestática', 'Hiperestàtica', 'Statically indeterminate'],
+  ['Mecanismo', 'Mecanisme', 'Mechanism'], ['No equilibrada', 'No equilibrada', 'Not in equilibrium'],
+  ['Faltan datos para calcular:', 'Falten dades per calcular:', 'Data missing to calculate:'],
+  ['Es un mecanismo.', 'És un mecanisme.', 'It is a mechanism.'],
+  ['Estructura isostática (', 'Estructura isostàtica (', 'Statically determinate structure ('],
+  ['Estructura hiperestática de grado ', 'Estructura hiperestàtica de grau ', 'Statically indeterminate structure of degree '],
+  [' barras + ', ' barres + ', ' bars + '], [' reacciones ', ' reaccions ', ' reactions '], [' nudos.', ' nusos.', ' joints.'],
+  ['>Barra<', '>Barra<', '>Bar<'], ['>Esfuerzo<', '>Esforç<', '>Force type<'], ['>Nudo<', '>Nus<', '>Joint<'],
+  ['Reacciones', 'Reaccions', 'Reactions'], ['Tracción', 'Tracció', 'Tension'], ['Compresión', 'Compressió', 'Compression'], ['>nula<', '>nul·la<', '>zero<'],
+  ['Cable ', 'Cable ', 'Cable '],
+  ['esfuerzo no determinable (estructura hiperestática)', 'esforç no determinable (estructura hiperestàtica)', 'force cannot be determined (indeterminate structure)'],
+  ['está a compresión (', 'està a compressió (', 'is in compression ('],
+  [' kN): un cable no puede trabajar así', ' kN): un cable no pot treballar així', ' kN): a cable cannot work like that'],
+  ['esfuerzo nulo: no necesita sección', 'esforç nul: no necessita secció', 'zero force: no cross-section needed'],
+  ['falta σadm (o fy y n) para calcular el diámetro', 'falta σadm (o fy i n) per calcular el diàmetre', 'σadm (or fy and n) is missing to calculate the diameter'],
+  [' MPa, A = ', ' MPa, A = ', ' MPa, A = '], [' mm², diámetro mínimo d = ', ' mm², diàmetre mínim d = ', ' mm², minimum diameter d = '],
+  [': d = ', ': d = ', ': d = '],
+  ['Guardado: ', 'Desat: ', 'Saved: '], ['Descarga cancelada.', 'Descàrrega cancel·lada.', 'Download cancelled.'],
+  ['No hay nada que exportar.', 'No hi ha res per exportar.', 'There is nothing to export.'],
+  ['Cerrar', 'Tanca', 'Close'], ['>Cerrar<', '>Tanca<', '>Close<'], ['>Barras<', '>Barres<', '>Bars<'],
+  ['Fuerza ', 'Força ', 'Force '], ['Peso ', 'Pes ', 'Weight '], ['Reacción en ', 'Reacció a ', 'Reaction at '], [': no determinable', ': no determinable', ': cannot be determined'], ['Imagen exportada', 'Imatge exportada', 'Exported image'],
+  ['Mantén pulsada la imagen (móvil) o haz clic derecho y elige «Guardar imagen como…».', 'Mantén premuda la imatge (mòbil) o fes clic dret i tria «Desa la imatge com a…».', 'Press and hold the image (mobile) or right-click and choose “Save image as…”.'],
+  ['Copia el texto y guárdalo en un archivo .json.', 'Copia el text i desa\'l en un fitxer .json.', 'Copy the text and save it in a .json file.'],
+  ['Ejercicio de estática', "Exercici d'estàtica", 'Statics exercise'],
+  ['FALTAN DATOS', 'FALTEN DADES', 'MISSING DATA'], ['RESULTADOS', 'RESULTATS', 'RESULTS'], ['CABLES', 'CABLES', 'CABLES'],
+  ['Ejercicio cargado.', 'Exercici carregat.', 'Exercise loaded.'],
+  ['El archivo no es un ejercicio válido.', 'El fitxer no és un exercici vàlid.', 'The file is not a valid exercise.'],
+  ['Ejemplo cargado. Puedes deshacer con Ctrl+Z.', 'Exemple carregat. Pots desfer amb Ctrl+Z.', 'Example loaded. You can undo with Ctrl+Z.'],
+  ['Lienzo vacío.', 'Llenç buit.', 'Empty canvas.'],
+  ['Faltan datos: revisa el panel de resultados.', 'Falten dades: revisa el panell de resultats.', 'Data missing: check the results panel.'],
+  ['La carga ', 'La càrrega ', 'Load '], [' no tiene valor.', ' no té valor.', ' has no value.'],
+
+  /* ---- Dibujo (sólidos libres) ---- */
+  ['Nudo ', 'Nus ', 'Joint '], ['Barra ', 'Barra ', 'Bar '], [' (cable)', ' (cable)', ' (cable)'],
+  ['incógnitas sin resolver (hiperestática)', 'incògnites sense resoldre (hiperestàtica)', 'unresolved unknowns (indeterminate)'],
+  ['S = 0 (barra de fuerza nula)', 'S = 0 (barra de força nul·la)', 'S = 0 (zero-force bar)'],
+  ['S = ? (no determinable)', 'S = ? (no determinable)', 'S = ? (cannot be determined)'],
+  ['TRACCIÓN', 'TRACCIÓ', 'TENSION'], ['COMPRESIÓN', 'COMPRESSIÓ', 'COMPRESSION'],
+  ['Equilibrio global: ΣFx = ', 'Equilibri global: ΣFx = ', 'Global equilibrium: ΣFx = '],
+  ['Equilibrio global no comprobable (reacciones indeterminadas)', 'Equilibri global no comprovable (reaccions indeterminades)', 'Global equilibrium cannot be checked (indeterminate reactions)'],
+  ['Sólido libre de toda la estructura', 'Sòlid lliure de tota l\'estructura', 'Free-body diagram of the whole structure'],
+
+  /* ---- Mensajes del motor de cálculo ---- */
+  ['Dibuja al menos dos nudos y una barra.', 'Dibuixa almenys dos nusos i una barra.', 'Draw at least two joints and one bar.'],
+  ['Barra de longitud cero: ', 'Barra de longitud zero: ', 'Zero-length bar: '], ['Nudos sin barras: ', 'Nusos sense barres: ', 'Joints without bars: '],
+  ['Las ecuaciones de equilibrio no tienen solución: la estructura es un mecanismo o faltan apoyos para esta carga.', 'Les equacions d\'equilibri no tenen solució: l\'estructura és un mecanisme o falten suports per a aquesta càrrega.', 'The equilibrium equations have no solution: the structure is a mechanism or supports are missing for this load.'],
+  ['Hay ', 'Hi ha ', 'There are '], [' barras y ', ' barres i ', ' bars and '], [' reacciones para ', ' reaccions per a ', ' reactions for '],
+  [' nudos (se necesitan m + r = 2n = ', ' nusos (calen m + r = 2n = ', ' joints (m + r = 2n = '],
+  [' para que sea isostática).', ' perquè sigui isostàtica).', ' are needed to be statically determinate).'],
+  ['La estructura es inestable (mecanismo o apoyos insuficientes), aunque la carga actual está en equilibrio. Revisa que haya al menos 3 reacciones bien orientadas y triángulos rígidos.', 'L\'estructura és inestable (mecanisme o suports insuficients), tot i que la càrrega actual està en equilibri. Revisa que hi hagi almenys 3 reaccions ben orientades i triangles rígids.', 'The structure is unstable (mechanism or insufficient supports), although the current load is in equilibrium. Check there are at least 3 well-oriented reactions and rigid triangles.'],
+  ['Hiperestática de grado ', 'Hiperestàtica de grau ', 'Statically indeterminate of degree '],
+  [': solo se calculan las incógnitas que no dependen de la deformación.', ': només es calculen les incògnites que no depenen de la deformació.', ': only the unknowns that do not depend on deformation are calculated.'],
+  ['No hay cargas aplicadas; todos los esfuerzos serán cero.', 'No hi ha càrregues aplicades; tots els esforços seran zero.', 'No loads applied; all forces will be zero.'],
+  ['No hay apoyos: coloca al menos un apoyo fijo y uno móvil.', 'No hi ha suports: col·loca almenys un suport fix i un de mòbil.', 'There are no supports: place at least one pinned and one roller support.'],
+  ['El cable ', 'El cable ', 'The cable '], [' está a compresión (', ' està a compressió (', ' is in compression ('],
+  [' kN): no puede trabajar así.', ' kN): no pot treballar així.', ' kN): it cannot work like that.'],
+  ['Falta la geometría: dibuja nudos y barras.', 'Falta la geometria: dibuixa nusos i barres.', 'Geometry is missing: draw joints and bars.'],
+  ['Faltan apoyos (fijo o móvil) para sujetar la estructura.', 'Falten suports (fix o mòbil) per subjectar l\'estructura.', 'Supports (pinned or roller) are missing to hold the structure.'],
+  ['Falta aplicar al menos una carga o peso.', 'Falta aplicar almenys una càrrega o pes.', 'At least one load or weight must be applied.'],
+  ['La estructura no está en equilibrio con los apoyos actuales: añade o reorienta apoyos o barras.', 'L\'estructura no està en equilibri amb els suports actuals: afegeix o reorienta suports o barres.', 'The structure is not in equilibrium with the current supports: add or reorient supports or bars.'],
+  ['La estructura es un mecanismo: añade barras para formar triángulos rígidos o más reacciones.', 'L\'estructura és un mecanisme: afegeix barres per formar triangles rígids o més reaccions.', 'The structure is a mechanism: add bars to form rigid triangles, or more reactions.'],
+  [': no determinable (estructura hiperestática)', ': no determinable (estructura hiperestàtica)', ': cannot be determined (indeterminate structure)'],
+  [': 0 kN (barra de fuerza nula)', ': 0 kN (barra de força nul·la)', ': 0 kN (zero-force bar)'],
+  ['esfuerzo en ', 'esforç en ', 'force in '],
+  [' kN a ', ' kN a ', ' kN in ']
+];
+
+var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calcular','Ajustar','Alejar','Acercar','Rejilla','Paso','Ángulo','libre','Resultados','Propiedades','Selección','Longitudes base','Ejemplos','Ejemplos…','Idioma','Herramientas','Cerrar','Borrar'];
+
+</script>
+<script>
+/* Motor de estática para armaduras (barras biarticuladas) y geometría asistida.
+   Convenciones: x a la derecha, y hacia arriba, ángulos en grados antihorarios desde +x.
+   Longitudes en m, fuerzas en kN, tensiones en MPa. Esfuerzo de barra: tracción > 0. */
+(function (root) {
+  'use strict';
+  var D2R = Math.PI / 180;
+  var EPS = 1e-9;
+
+  function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+
+  /* ---------- Geometría ---------- */
+  function barLength(m, bar) {
+    var a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+    return Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  function barAngle(m, bar) { // ángulo de a hacia b, 0..360
+    var a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+    var t = Math.atan2(b.y - a.y, b.x - a.x) / D2R;
+    return (t + 360) % 360;
+  }
+  // Coloca el nudo b de la barra a la distancia L del nudo a, conservando la dirección
+  function setBarLength(m, barId, L) {
+    var bar = byId(m.bars, barId), a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+    var cur = Math.hypot(b.x - a.x, b.y - a.y);
+    var ux = cur < EPS ? 1 : (b.x - a.x) / cur, uy = cur < EPS ? 0 : (b.y - a.y) / cur;
+    b.x = a.x + ux * L; b.y = a.y + uy * L;
+  }
+  // Cambia el ángulo de la barra (a→b) manteniendo su longitud
+  function setBarAngle(m, barId, deg) {
+    var bar = byId(m.bars, barId), a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+    var L = Math.hypot(b.x - a.x, b.y - a.y);
+    b.x = a.x + L * Math.cos(deg * D2R); b.y = a.y + L * Math.sin(deg * D2R);
+  }
+  // Grupos de longitud: m.groups = {nombre: longitud en m}. Relajación iterativa que
+  // iguala todas las barras de cada grupo a su longitud sin mover los nudos "pinned".
+  function relaxGroups(m, pinned, iters) {
+    pinned = pinned || {}; iters = iters || 200;
+    var groups = m.groups || {}, names = Object.keys(groups), it, g, k;
+    if (!names.length) return 0;
+    var worst = 0;
+    for (it = 0; it < iters; it++) {
+      worst = 0;
+      for (g = 0; g < names.length; g++) {
+        var L = groups[names[g]];
+        for (k = 0; k < m.bars.length; k++) {
+          var bar = m.bars[k]; if (bar.group !== names[g]) continue;
+          var a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+          var cur = Math.hypot(b.x - a.x, b.y - a.y);
+          var ux = cur < EPS ? 1 : (b.x - a.x) / cur, uy = cur < EPS ? 0 : (b.y - a.y) / cur;
+          var err = L - cur; worst = Math.max(worst, Math.abs(err));
+          var pa = pinned[a.id], pb = pinned[b.id];
+          if (pa && pb) continue;
+          var wa = pa ? 0 : (pb ? 1 : 0.5), wb = pb ? 0 : (pa ? 1 : 0.5);
+          a.x -= ux * err * wa; a.y -= uy * err * wa;
+          b.x += ux * err * wb; b.y += uy * err * wb;
+        }
+      }
+      if (worst < 1e-9) break;
+    }
+    return worst;
+  }
+  // Fija la longitud de una barra; si pertenece a un grupo se propaga a todo el grupo
+  function setLengthSmart(m, barId, L) {
+    var bar = byId(m.bars, barId);
+    if (bar.group) {
+      m.groups = m.groups || {}; m.groups[bar.group] = L;
+      var pin = {}; pin[bar.a] = true;
+      relaxGroups(m, pin);
+    } else setBarLength(m, barId, L);
+  }
+  // Une barras en un grupo de igual longitud (usa la longitud de la primera)
+  function linkEqual(m, refBarId, otherBarId) {
+    var r = byId(m.bars, refBarId), o = byId(m.bars, otherBarId);
+    m.groups = m.groups || {};
+    var name = r.group || o.group;
+    if (!name) { var i = 1; while (m.groups['L' + i] != null) i++; name = 'L' + i; }
+    if (!r.group) { r.group = name; if (m.groups[name] == null) m.groups[name] = barLength(m, r); }
+    if (o.group && o.group !== name) { var old = o.group; m.bars.forEach(function (b) { if (b.group === old) b.group = name; }); delete m.groups[old]; }
+    o.group = name;
+    var pin = {}; pin[r.a] = true; pin[r.b] = true;
+    relaxGroups(m, pin);
+    return name;
+  }
+  function unlink(m, barId) {
+    var b = byId(m.bars, barId), name = b.group; b.group = null;
+    if (name && !m.bars.some(function (x) { return x.group === name; })) delete m.groups[name];
+  }
+  function barsAt(m, nodeId) { return m.bars.filter(function (b) { return b.a === nodeId || b.b === nodeId; }); }
+  // Ángulo entre dos barras que parten del mismo nudo (grados, 0..180)
+  function angleBetween(m, nodeId, barA, barB) {
+    var n = byId(m.nodes, nodeId);
+    function dir(bar) {
+      var o = byId(m.nodes, bar.a === nodeId ? bar.b : bar.a);
+      return Math.atan2(o.y - n.y, o.x - n.x);
+    }
+    var d = Math.abs(dir(barA) - dir(barB)) / D2R % 360;
+    return d > 180 ? 360 - d : d;
+  }
+
+  /* ---------- Cargas y apoyos ---------- */
+  function loadVec(l) { return { fx: l.F * Math.cos(l.ang * D2R), fy: l.F * Math.sin(l.ang * D2R) }; }
+
+  // Reacciones: pin/fixed -> Rx,Ry ; roller -> una fuerza en la dirección normal (ang de la normal)
+  function supportUnknowns(n) {
+    if (n.support === 'pin' || n.support === 'fixed') return [
+      { kind: 'R', node: n.id, label: 'R' + n.id + 'x', dx: 1, dy: 0 },
+      { kind: 'R', node: n.id, label: 'R' + n.id + 'y', dx: 0, dy: 1 }];
+    if (n.support === 'roller') {
+      var a = (n.normal == null ? 90 : n.normal) * D2R;
+      return [{ kind: 'R', node: n.id, label: 'R' + n.id, dx: Math.cos(a), dy: Math.sin(a), roller: true }];
+    }
+    return [];
+  }
+
+  /* ---------- Álgebra: RREF con tolerancia ---------- */
+  function rref(M, rows, cols) { // M: matriz aumentada rows x (cols+1) ; modifica M
+    var piv = [], r = 0, c, i, j, p, best, t, f, scale = 0;
+    for (i = 0; i < rows; i++) for (j = 0; j <= cols; j++) scale = Math.max(scale, Math.abs(M[i][j]));
+    var tol = Math.max(1e-10, scale * 1e-10);
+    for (c = 0; c < cols && r < rows; c++) {
+      p = r; best = Math.abs(M[r][c]);
+      for (i = r + 1; i < rows; i++) if (Math.abs(M[i][c]) > best) { best = Math.abs(M[i][c]); p = i; }
+      if (best < tol) continue;
+      t = M[p]; M[p] = M[r]; M[r] = t;
+      f = M[r][c];
+      for (j = c; j <= cols; j++) M[r][j] /= f;
+      for (i = 0; i < rows; i++) {
+        if (i === r) continue;
+        f = M[i][c];
+        if (Math.abs(f) > 0) for (j = c; j <= cols; j++) M[i][j] -= f * M[r][j];
+      }
+      piv.push(c); r++;
+    }
+    return { piv: piv, rank: r, tol: tol };
+  }
+
+  /* ---------- Análisis principal ---------- */
+  function analyze(m) {
+    var res = {
+      ok: false, status: '', messages: [], warnings: [],
+      unknowns: [], values: {}, determined: {}, barForce: {}, reactions: {}, degree: 0,
+      nNodes: m.nodes.length, nBars: m.bars.length, nReact: 0
+    };
+    var n = m.nodes.length;
+    if (n === 0 || m.bars.length === 0) { res.status = 'vacio'; res.messages.push('Dibuja al menos dos nudos y una barra.'); return res; }
+
+    var unk = [];
+    m.bars.forEach(function (b) { unk.push({ kind: 'S', bar: b.id, label: b.id }); });
+    m.nodes.forEach(function (nd) { supportUnknowns(nd).forEach(function (u) { unk.push(u); res.nReact++; }); });
+    res.unknowns = unk;
+
+    var idx = {}; m.nodes.forEach(function (nd, i) { idx[nd.id] = i; });
+    var rows = 2 * n, cols = unk.length, M = [], i, j;
+    for (i = 0; i < rows; i++) { M.push(new Array(cols + 1)); for (j = 0; j <= cols; j++) M[i][j] = 0; }
+
+    unk.forEach(function (u, k) {
+      if (u.kind === 'S') {
+        var bar = byId(m.bars, u.bar), a = byId(m.nodes, bar.a), b = byId(m.nodes, bar.b);
+        var L = Math.hypot(b.x - a.x, b.y - a.y);
+        if (L < EPS) return;
+        var ux = (b.x - a.x) / L, uy = (b.y - a.y) / L;
+        M[2 * idx[a.id]][k] += ux; M[2 * idx[a.id] + 1][k] += uy;      // tracción tira de a hacia b
+        M[2 * idx[b.id]][k] -= ux; M[2 * idx[b.id] + 1][k] -= uy;
+      } else {
+        M[2 * idx[u.node]][k] += u.dx; M[2 * idx[u.node] + 1][k] += u.dy;
+      }
+    });
+    var hasLoad = false;
+    (m.loads || []).forEach(function (l) {
+      if (idx[l.node] == null) return;
+      var v = loadVec(l);
+      if (Math.abs(l.F) > EPS) hasLoad = true;
+      M[2 * idx[l.node]][cols] -= v.fx; M[2 * idx[l.node] + 1][cols] -= v.fy;
+    });
+
+    var degenerate = m.bars.filter(function (b) { return barLength(m, b) < 1e-6; });
+    if (degenerate.length) res.warnings.push('Barra de longitud cero: ' + degenerate.map(function (b) { return b.id; }).join(', ') + '.');
+    var isolated = m.nodes.filter(function (nd) { return barsAt(m, nd.id).length === 0; });
+    if (isolated.length) res.warnings.push('Nudos sin barras: ' + isolated.map(function (x) { return x.id; }).join(', ') + '.');
+
+    var R = rref(M, rows, cols);
+    res.rank = R.rank; res.rows = rows; res.cols = cols;
+    var inconsistent = false;
+    for (i = R.rank; i < rows; i++) if (Math.abs(M[i][cols]) > Math.max(1e-7, R.tol * 1e3)) inconsistent = true;
+
+    // solución particular y nulo
+    var x = new Array(cols).fill(0), free = [], isPiv = {};
+    R.piv.forEach(function (c, r) { x[c] = M[r][cols]; isPiv[c] = true; });
+    for (j = 0; j < cols; j++) if (!isPiv[j]) free.push(j);
+    var null_ = free.map(function (f) {
+      var v = new Array(cols).fill(0); v[f] = 1;
+      R.piv.forEach(function (c, r) { v[c] = -M[r][f]; });
+      return v;
+    });
+    unk.forEach(function (u, k) {
+      var det = true;
+      for (var q = 0; q < null_.length; q++) if (Math.abs(null_[q][k]) > 1e-8) { det = false; break; }
+      res.determined[u.label] = det && !inconsistent;
+      res.values[u.label] = x[k];
+    });
+
+    res.degree = cols - rows;                          // grado de indeterminación por conteo (m + r - 2n)
+    var mech = R.rank < rows;
+    if (inconsistent) {
+      res.status = 'inestable';
+      res.messages.push('Las ecuaciones de equilibrio no tienen solución: la estructura es un mecanismo o faltan apoyos para esta carga.');
+      res.messages.push('Hay ' + res.nBars + ' barras y ' + res.nReact + ' reacciones para ' + n + ' nudos (se necesitan m + r = 2n = ' + (2 * n) + ' para que sea isostática).');
+    } else if (mech) {
+      res.status = 'mecanismo';
+      res.messages.push('La estructura es inestable (mecanismo o apoyos insuficientes), aunque la carga actual está en equilibrio. Revisa que haya al menos 3 reacciones bien orientadas y triángulos rígidos.');
+    } else if (cols > rows) {
+      res.status = 'hiperestatica';
+      res.messages.push('Hiperestática de grado ' + res.degree + ': solo se calculan las incógnitas que no dependen de la deformación.');
+    } else {
+      res.status = 'isostatica';
+    }
+    if (!hasLoad) res.warnings.push('No hay cargas aplicadas; todos los esfuerzos serán cero.');
+    if (res.nReact === 0) res.warnings.push('No hay apoyos: coloca al menos un apoyo fijo y uno móvil.');
+
+    res.ok = !inconsistent && !mech;
+    m.bars.forEach(function (b) {
+      var s = res.values[b.id];
+      res.barForce[b.id] = { value: s, known: !!res.determined[b.id], L: barLength(m, b) };
+    });
+    m.nodes.forEach(function (nd) {
+      var us = supportUnknowns(nd);
+      if (!us.length) return;
+      var fx = 0, fy = 0, ok = true;
+      us.forEach(function (u) {
+        var v = res.values[u.label]; if (!res.determined[u.label]) ok = false;
+        fx += v * u.dx; fy += v * u.dy;
+      });
+      res.reactions[nd.id] = { fx: fx, fy: fy, known: ok, labels: us.map(function (u) { return u.label; }) };
+    });
+    (m.bars || []).forEach(function (b) {
+      if (b.cable && res.barForce[b.id].known && res.barForce[b.id].value < -1e-7)
+        res.warnings.push('El cable ' + b.id + ' está a compresión (' + fmt(res.barForce[b.id].value) + ' kN): no puede trabajar así.');
+    });
+    return res;
+  }
+
+  function fmt(v, d) { d = d == null ? 3 : d; var a = Math.abs(v) < Math.pow(10, -d) / 2 ? 0 : v; return a.toFixed(d).replace(/\.?0+$/, ''); }
+
+  /* ---------- Preguntas del problema ---------- */
+  // q: {type, bar?, node?, sigma?, fy?, safety?}
+  function checkMissing(m, res, q) {
+    var miss = [];
+    if (!m.nodes.length || !m.bars.length) miss.push('Falta la geometría: dibuja nudos y barras.');
+    if (res.nReact === 0) miss.push('Faltan apoyos (fijo o móvil) para sujetar la estructura.');
+    if (!(m.loads || []).some(function (l) { return Math.abs(l.F) > EPS; })) miss.push('Falta aplicar al menos una carga o peso.');
+    if (res.status === 'inestable') miss.push('La estructura no está en equilibrio con los apoyos actuales: añade o reorienta apoyos o barras.');
+    if (res.status === 'mecanismo') miss.push('La estructura es un mecanismo: añade barras para formar triángulos rígidos o más reacciones.');
+    var needBar = ['force_bar', 'bar_type', 'cable_diameter', 'bar_area'];
+    if (needBar.indexOf(q.type) >= 0 && !byId(m.bars, q.bar)) miss.push('Elige la barra por la que preguntas.');
+    if (q.type === 'reaction' && !(q.node && byId(m.nodes, q.node) && byId(m.nodes, q.node).support)) miss.push('Elige un nudo con apoyo para la reacción.');
+    if (q.type === 'cable_diameter' || q.type === 'bar_area') {
+      var sig = q.sigma;
+      if (!(sig > 0)) {
+        if (q.fy > 0 && q.safety > 0) { /* sigma derivado */ } else miss.push('Falta la tensión admisible (σadm) o el límite elástico fy con el coeficiente de seguridad.');
+      }
+    }
+    return miss;
+  }
+
+  function answer(m, res, q) {
+    var out = { lines: [], value: null };
+    var b = q.bar ? byId(m.bars, q.bar) : null;
+    function barText(bar) {
+      var f = res.barForce[bar.id];
+      if (!f.known) return 'esfuerzo en ' + bar.id + ': no determinable (estructura hiperestática)';
+      var v = f.value;
+      if (Math.abs(v) < 1e-7) return bar.id + ': 0 kN (barra de fuerza nula)';
+      return bar.id + ': ' + fmt(Math.abs(v)) + ' kN a ' + (v > 0 ? 'TRACCIÓN' : 'COMPRESIÓN');
+    }
+    switch (q.type) {
+      case 'force_bar': if (b) out.lines.push('Fuerza en la barra ' + barText(b)); break;
+      case 'bar_type': if (b) {
+        var f = res.barForce[b.id];
+        out.lines.push(!f.known ? 'No determinable.' : Math.abs(f.value) < 1e-7 ? 'La barra ' + b.id + ' no trabaja (fuerza nula).' :
+          'La barra ' + b.id + ' trabaja a ' + (f.value > 0 ? 'tracción (tira de sus nudos)' : 'compresión (empuja a sus nudos)') + '.');
+      } break;
+      case 'reaction': {
+        var r = res.reactions[q.node];
+        if (r) out.lines.push(!r.known ? 'Reacción en ' + q.node + ': no determinable.' :
+          'Reacción en ' + q.node + ': Rx = ' + fmt(r.fx) + ' kN, Ry = ' + fmt(r.fy) + ' kN, |R| = ' + fmt(Math.hypot(r.fx, r.fy)) + ' kN, ángulo ' + fmt(((Math.atan2(r.fy, r.fx) / D2R) + 360) % 360, 1) + '°');
+      } break;
+      case 'all_bars': m.bars.forEach(function (bar) { out.lines.push(barText(bar)); }); break;
+      case 'max_bar': {
+        var best = null;
+        m.bars.forEach(function (bar) { var f = res.barForce[bar.id]; if (f.known && (!best || Math.abs(f.value) > Math.abs(res.barForce[best.id].value))) best = bar; });
+        if (best) out.lines.push('La barra más cargada es ' + barText(best));
+      } break;
+      case 'cable_diameter':
+      case 'bar_area': if (b) {
+        var fb = res.barForce[b.id];
+        if (!fb.known) { out.lines.push('El esfuerzo en ' + b.id + ' no es determinable.'); break; }
+        var sig = q.sigma > 0 ? q.sigma : q.fy / q.safety;
+        var F = Math.abs(fb.value) * 1000;                    // N
+        var A = F / sig;                                       // mm²
+        out.lines.push('Esfuerzo en ' + b.id + ': ' + fmt(Math.abs(fb.value)) + ' kN (' + (fb.value > 0 ? 'tracción' : fb.value < -1e-7 ? 'compresión' : 'nulo') + ')');
+        out.lines.push('σadm = ' + fmt(sig, 2) + ' MPa' + (q.sigma > 0 ? '' : '  (= fy / n = ' + fmt(q.fy, 1) + ' / ' + fmt(q.safety, 2) + ')'));
+        out.lines.push('Área necesaria A = F / σadm = ' + fmt(A, 2) + ' mm²');
+        var d = Math.sqrt(4 * A / Math.PI);
+        out.value = d;
+        if (q.type === 'cable_diameter') out.lines.push('Diámetro mínimo d = √(4A/π) = ' + fmt(d, 2) + ' mm');
+        if (fb.value < -1e-7 && (b.cable || q.type === 'cable_diameter')) out.lines.push('AVISO: la barra está a compresión; un cable no puede resistirla.');
+        if (fb.value < -1e-7 && q.type === 'bar_area') out.lines.push('Nota: en compresión también debe comprobarse el pandeo.');
+      } break;
+    }
+    return out;
+  }
+
+  var API = {
+    analyze: analyze, answer: answer, checkMissing: checkMissing, fmt: fmt,
+    barLength: barLength, barAngle: barAngle, setBarLength: setBarLength, setBarAngle: setBarAngle,
+    relaxGroups: relaxGroups, setLengthSmart: setLengthSmart, linkEqual: linkEqual, unlink: unlink, barsAt: barsAt, angleBetween: angleBetween,
+    loadVec: loadVec, supportUnknowns: supportUnknowns, byId: byId
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Estatica = API;
+})(typeof window !== 'undefined' ? window : this);
+
+</script>
+<script>
+(function () {
+'use strict';
+var E = window.Estatica, byId = E.byId, fmt = E.fmt;
+var D2R = Math.PI / 180;
+var $ = function (id) { return document.getElementById(id); };
+var FONT_UI = '"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif';
+var FONT_NUM = '"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace';
+
+/* ============ Idiomas ============ */
+var LANG = 'es', LIDX = 1, LRE = null, LMAP = {}, LEXACT = {}, TCACHE = {};
+function setLangData(l) {
+  LANG = l; LIDX = l === 'ca' ? 1 : 2; TCACHE = {}; LEXACT = {}; LMAP = {};
+  var keys = [];
+  I18N_DICT.forEach(function (e) { LEXACT[e[0]] = e[LIDX]; if (I18N_EXACT.indexOf(e[0]) < 0) { LMAP[e[0]] = e[LIDX]; keys.push(e[0]); } });
+  keys.sort(function (a, b) { return b.length - a.length; });
+  LRE = new RegExp(keys.map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|'), 'g');
+}
+function tr(s) {
+  if (LANG === 'es' || !s) return s;
+  var c = TCACHE[s]; if (c !== undefined) return c;
+  var o = s.replace(LRE, function (m) { return LMAP[m]; }); TCACHE[s] = o; return o;
+}
+function trx(s) { if (LANG === 'es') return s; var v = LEXACT[s]; return v !== undefined ? v : tr(s); }
+function tf(key, args) { var o = LANG === 'es' ? key : (LEXACT[key] || key); return o.replace(/\{(\d)\}/g, function (m, i) { return args[i]; }); }
+var LOADLEN = 66;
+
+/* ============ Modelo ============ */
+function freshModel() {
+  return {
+    nodes: [], bars: [], loads: [], groups: {}, dims: [], angs: [],
+    cfg: { grid: 0.5, snapGrid: true, snapAng: 15, relAng: true, snapLen: true, autoGroup: true, showLen: false },
+    q: { title: '', type: 'force_bar', bar: '', node: '', sigma: '', fy: '', safety: '' }
+  };
+}
+var M = freshModel();
+var R = null;            // resultados {res, ans, miss}
+var sel = null, tool = 'select', hover = null, draft = null;
+var view = { ox: 120, oy: 380, s: 90 };
+
+function nextNodeId() {
+  var L = 'ABCDEFGHIJKLMNOPQSTUVWXYZ';
+  for (var k = 0; ; k++) for (var i = 0; i < L.length; i++) { var id = k ? L[i] + k : L[i]; if (!byId(M.nodes, id)) return id; }
+}
+function nextId(list, prefix) { var i = 1; while (byId(list, prefix + i)) i++; return prefix + i; }
+function nextGroupName() { var i = 1; while (M.groups['L' + i] != null) i++; return 'L' + i; }
+function addNode(x, y) { var n = { id: nextNodeId(), x: x, y: y, support: null, normal: 90 }; M.nodes.push(n); return n.id; }
+function cleanup() {
+  M.bars = M.bars.filter(function (b) { return byId(M.nodes, b.a) && byId(M.nodes, b.b); });
+  M.loads = M.loads.filter(function (l) { return byId(M.nodes, l.node); });
+  M.dims = M.dims.filter(function (d) { return byId(M.nodes, d.a) && byId(M.nodes, d.b); });
+  M.angs = M.angs.filter(function (a) { return byId(M.nodes, a.node) && byId(M.bars, a.b1) && (!a.b2 || byId(M.bars, a.b2)); });
+  M.bars.forEach(function (b) { if (b.group && M.groups[b.group] == null) b.group = null; });
+}
+
+/* ============ Paletas ============ */
+function readPal() {
+  var cs = getComputedStyle(document.documentElement);
+  var g = function (n) { return cs.getPropertyValue(n).trim(); };
+  return { bg: g('--cv-bg'), grid: g('--grid'), gridMajor: g('--grid-major'), ink: g('--ink'), muted: g('--muted'),
+    load: g('--load'), react: g('--react'), tension: g('--tension'), compress: g('--compress'), sel: g('--sel'),
+    dim: g('--dim'), node: g('--node-fill'), support: g('--support') };
+}
+var EXPORT_PAL = { bg: '#ffffff', grid: '#e5e7eb', gridMajor: '#cbd5e1', ink: '#111827', muted: '#6b7280', load: '#b4440a',
+  react: '#0f766e', tension: '#1d4ed8', compress: '#c81e1e', sel: '#d97706', dim: '#475569', node: '#ffffff', support: '#d1d5db' };
+
+/* ============ Utilidades de dibujo ============ */
+function sx(v, x) { return v.ox + x * v.s; }
+function sy(v, y) { return v.oy - y * v.s; }
+function label(ctx, txt, x, y, pal, o) {
+  o = o || {}; txt = tr(txt);
+  var size = o.size || 12;
+  ctx.font = (o.weight || '500') + ' ' + size + 'px ' + (o.font || FONT_NUM);
+  var w = ctx.measureText(txt).width;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (o.bg !== false) { ctx.globalAlpha = 0.88; ctx.fillStyle = pal.bg; ctx.fillRect(x - w / 2 - 3, y - size / 2 - 2, w + 6, size + 4); ctx.globalAlpha = 1; }
+  ctx.fillStyle = o.color || pal.ink; ctx.fillText(txt, x, y);
+}
+function arrow(ctx, x1, y1, x2, y2, color, lw, head) {
+  lw = lw || 2.5; head = head || 9;
+  var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy); if (L < 1) return;
+  var ux = dx / L, uy = dy / L;
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * head * 0.7, y2 - uy * head * 0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * head - uy * head * 0.42, y2 - uy * head + ux * head * 0.42);
+  ctx.lineTo(x2 - ux * head + uy * head * 0.42, y2 - uy * head - ux * head * 0.42); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function wrapText(ctx, text, maxW) {
+  var out = [];
+  String(text).split('\n').forEach(function (par) {
+    var words = par.split(/\s+/), line = '';
+    words.forEach(function (w) {
+      var t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
+    });
+    out.push(line);
+  });
+  return out;
+}
+function segDist(px, py, x1, y1, x2, y2) {
+  var dx = x2 - x1, dy = y2 - y1, L2 = dx * dx + dy * dy;
+  var t = L2 ? Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / L2)) : 0;
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+/* ============ Geometría de anotaciones ============ */
+function loadGeom(l, m, v) {
+  var n = byId(m.nodes, l.node), a = (l.ang || 0) * D2R;
+  var x = sx(v, n.x), y = sy(v, n.y), c = Math.cos(a), s = Math.sin(a);
+  return { x0: x + c * 9, y0: y - s * 9, x1: x + c * LOADLEN, y1: y - s * LOADLEN, c: c, s: s };
+}
+function dimGeom(m, v, d) {
+  var a = byId(m.nodes, d.a), b = byId(m.nodes, d.b);
+  var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1e-9, ux = dx / L, uy = dy / L, nx = -uy, ny = ux, off = d.off == null ? 0.5 : d.off;
+  var p1 = { x: sx(v, a.x + nx * off), y: sy(v, a.y + ny * off) }, p2 = { x: sx(v, b.x + nx * off), y: sy(v, b.y + ny * off) };
+  return { a: { x: sx(v, a.x), y: sy(v, a.y) }, b: { x: sx(v, b.x), y: sy(v, b.y) }, p1: p1, p2: p2,
+    mid: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 }, L: L, ang: Math.atan2(p2.y - p1.y, p2.x - p1.x), nx: nx, ny: ny };
+}
+function otherEnd(m, bar, nodeId) { return byId(m.nodes, bar.a === nodeId ? bar.b : bar.a); }
+function angGeom(m, v, an) {
+  var n = byId(m.nodes, an.node), b1 = byId(m.bars, an.b1), o1 = otherEnd(m, b1, an.node);
+  var t1 = Math.atan2(o1.y - n.y, o1.x - n.x), t2 = 0;
+  if (an.b2) { var o2 = otherEnd(m, byId(m.bars, an.b2), an.node); t2 = Math.atan2(o2.y - n.y, o2.x - n.x); }
+  var d = t2 - t1; d = Math.atan2(Math.sin(d), Math.cos(d));
+  var r = 26 + (an.r || 0), mid = t1 + d / 2, cx = sx(v, n.x), cy = sy(v, n.y);
+  return { cx: cx, cy: cy, r: r, t1: t1, t2: t2, d: d, deg: Math.abs(d) / D2R,
+    lx: cx + Math.cos(mid) * (r + 17), ly: cy - Math.sin(mid) * (r + 17) };
+}
+
+/* ============ Dibujo del modelo ============ */
+function drawGrid(ctx, m, v, pal, W, H) {
+  var step = m.cfg.grid || 0.5; while (step * v.s < 10) step *= 2;
+  var x0 = (0 - v.ox) / v.s, x1 = (W - v.ox) / v.s, y1 = v.oy / v.s, y0 = (v.oy - H) / v.s, i;
+  ctx.lineWidth = 1;
+  for (i = Math.ceil(x0 / step); i * step <= x1; i++) {
+    ctx.strokeStyle = i % 5 === 0 ? pal.gridMajor : pal.grid; var px = Math.round(v.ox + i * step * v.s) + 0.5;
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+  }
+  for (i = Math.ceil(y0 / step); i * step <= y1; i++) {
+    ctx.strokeStyle = i % 5 === 0 ? pal.gridMajor : pal.grid; var py = Math.round(v.oy - i * step * v.s) + 0.5;
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(W, py); ctx.stroke();
+  }
+}
+function isSel(o, type, id) { return o.sel && o.sel.type === type && o.sel.id === id; }
+function barColor(b, pal, res) {
+  var f = res && res.barForce[b.id];
+  if (f && f.known) return Math.abs(f.value) < 1e-7 ? pal.muted : (f.value > 0 ? pal.tension : pal.compress);
+  return pal.ink;
+}
+function drawBar(ctx, m, v, pal, b, o) {
+  var a = byId(m.nodes, b.a), c = byId(m.nodes, b.b);
+  var x1 = sx(v, a.x), y1 = sy(v, a.y), x2 = sx(v, c.x), y2 = sy(v, c.y);
+  ctx.save(); ctx.lineCap = 'round';
+  var lw = o.fbd ? 2.5 : (b.cable ? 2.4 : 5);
+  if (isSel(o, 'bar', b.id) || (o.hover && o.hover.type === 'bar' && o.hover.id === b.id)) {
+    ctx.strokeStyle = pal.sel; ctx.globalAlpha = isSel(o, 'bar', b.id) ? 0.55 : 0.3; ctx.lineWidth = lw + 9;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = o.fbd ? pal.ink : barColor(b, pal, o.res); ctx.lineWidth = lw;
+  if (b.cable) ctx.setLineDash([10, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.restore();
+}
+function drawSupport(ctx, n, v, pal) {
+  var x = sx(v, n.x), y = sy(v, n.y), nr = (n.normal == null ? 90 : n.normal) * D2R;
+  var bx = -Math.cos(nr), by = Math.sin(nr), px = -by, py = bx;
+  var pin = n.support === 'pin', h = pin ? 26 : 20, hw = pin ? 15 : 13, cx = x + bx * h, cy = y + by * h;
+  ctx.save(); ctx.lineWidth = 2; ctx.strokeStyle = pal.ink; ctx.fillStyle = pal.support; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(cx + px * hw, cy + py * hw); ctx.lineTo(cx - px * hw, cy - py * hw); ctx.closePath(); ctx.fill(); ctx.stroke();
+  var gx = cx, gy = cy;
+  if (!pin) {
+    var r = 4.5;
+    [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.arc(cx + px * hw * 0.5 * s + bx * r, cy + py * hw * 0.5 * s + by * r, r, 0, 7); ctx.fillStyle = pal.bg; ctx.fill(); ctx.stroke(); });
+    gx = cx + bx * 2 * r; gy = cy + by * 2 * r;
+  }
+  var gw = hw + 8;
+  ctx.beginPath(); ctx.moveTo(gx + px * gw, gy + py * gw); ctx.lineTo(gx - px * gw, gy - py * gw); ctx.stroke();
+  ctx.lineWidth = 1.3;
+  for (var t = -gw; t <= gw; t += 6) { ctx.beginPath(); ctx.moveTo(gx + px * t, gy + py * t); ctx.lineTo(gx + px * t + bx * 7 - px * 5, gy + py * t + by * 7 - py * 5); ctx.stroke(); }
+  ctx.restore();
+}
+function loadText(l) {
+  if (l.showVal === false) return l.id;
+  if (l.F == null) return l.id + ' = ? kN';
+  return l.kind === 'peso' ? l.id + ' ' + fmt(l.mass, 1) + ' kg = ' + fmt(l.F, 2) + ' kN' : l.id + ' ' + fmt(l.F, 2) + ' kN';
+}
+function drawLoad(ctx, m, v, pal, l, o) {
+  var g = loadGeom(l, m, v);
+  if (isSel(o, 'load', l.id) || (o.hover && o.hover.type === 'load' && o.hover.id === l.id)) {
+    ctx.save(); ctx.strokeStyle = pal.sel; ctx.globalAlpha = 0.5; ctx.lineWidth = 11; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(g.x0, g.y0); ctx.lineTo(g.x1, g.y1); ctx.stroke(); ctx.restore();
+  }
+  arrow(ctx, g.x0, g.y0, g.x1, g.y1, l.F == null ? pal.muted : pal.load, 3, 11);
+  label(ctx, loadText(l), g.x1 + g.c * 4 + (g.c >= 0 ? 0 : 0) , g.y1 - g.s * 14 - (Math.abs(g.s) < 0.3 ? 12 : 0), pal, { color: pal.load, weight: '600' });
+}
+function drawReactions(ctx, m, v, pal, res) {
+  m.nodes.forEach(function (n) {
+    var r = res.reactions[n.id]; if (!r) return;
+    var x = sx(v, n.x), y = sy(v, n.y), L = 58;
+    if (!r.known) { label(ctx, 'R' + n.id + ' = ?', x, y + 38, pal, { color: pal.muted }); return; }
+    var comps = n.support === 'roller' ? [{ fx: r.fx, fy: r.fy, t: 'R' + n.id, v: Math.hypot(r.fx, r.fy) }]
+      : [{ fx: r.fx, fy: 0, t: 'R' + n.id + 'x', v: r.fx }, { fx: 0, fy: r.fy, t: 'R' + n.id + 'y', v: r.fy }];
+    comps.forEach(function (c) {
+      var mag = Math.hypot(c.fx, c.fy); if (mag < 1e-7) return;
+      var ux = c.fx / mag, uy = -c.fy / mag;
+      arrow(ctx, x + ux * 9, y + uy * 9, x + ux * L, y + uy * L, pal.react, 3, 11);
+      label(ctx, c.t + ' ' + fmt(Math.abs(c.v), 2) + ' kN', x + ux * (L + 6) + (ux > 0.5 ? 30 : ux < -0.5 ? -30 : 0), y + uy * (L + 6) + (Math.abs(ux) < 0.5 ? uy * 8 : 0), pal, { color: pal.react, weight: '600' });
+    });
+  });
+}
+function drawDim(ctx, m, v, pal, d, o) {
+  var g = dimGeom(m, v, d), sgn = (d.off == null ? 0.5 : d.off) >= 0 ? 1 : -1;
+  ctx.save(); ctx.strokeStyle = pal.dim; ctx.fillStyle = pal.dim; ctx.lineWidth = 1.2;
+  if (isSel(o, 'dim', d.id) || (o.hover && o.hover.type === 'dim' && o.hover.id === d.id)) { ctx.strokeStyle = pal.sel; ctx.lineWidth = 2.4; }
+  [[g.a, g.p1], [g.b, g.p2]].forEach(function (p) {
+    var ex = g.nx * 6 * sgn, ey = -g.ny * 6 * sgn;
+    ctx.beginPath(); ctx.moveTo(p[0].x, p[0].y); ctx.lineTo(p[1].x + ex, p[1].y + ey); ctx.stroke();
+  });
+  ctx.beginPath(); ctx.moveTo(g.p1.x, g.p1.y); ctx.lineTo(g.p2.x, g.p2.y); ctx.stroke();
+  var dx = g.p2.x - g.p1.x, dy = g.p2.y - g.p1.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  ctx.strokeStyle = pal.dim; ctx.lineWidth = 1.2;
+  [[g.p1, 1], [g.p2, -1]].forEach(function (e) {
+    var p = e[0], s = e[1]; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + s * (ux * 9 - uy * 3.5), p.y + s * (uy * 9 + ux * 3.5)); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + s * (ux * 9 + uy * 3.5), p.y + s * (uy * 9 - ux * 3.5)); ctx.stroke();
+  });
+  ctx.translate(g.mid.x, g.mid.y); var ang = g.ang; if (Math.abs(ang) > Math.PI / 2) ang += Math.PI; ctx.rotate(ang);
+  label(ctx, fmt(g.L, 3) + ' m', 0, -9, pal, { color: pal.dim, weight: '600' });
+  ctx.restore();
+}
+function drawAng(ctx, m, v, pal, an, o) {
+  var g = angGeom(m, v, an);
+  ctx.save(); ctx.strokeStyle = pal.dim; ctx.lineWidth = 1.4;
+  if (isSel(o, 'ang', an.id) || (o.hover && o.hover.type === 'ang' && o.hover.id === an.id)) { ctx.strokeStyle = pal.sel; ctx.lineWidth = 2.6; }
+  if (!an.b2) { ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(g.cx, g.cy); ctx.lineTo(g.cx + g.r + 14, g.cy); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r, -g.t1, -(g.t1 + g.d), g.d > 0); ctx.stroke();
+  label(ctx, fmt(g.deg, 1) + '°', g.lx, g.ly, pal, { color: pal.dim, weight: '600' });
+  ctx.restore();
+}
+function barLabel(m, b, o) {
+  var parts = [b.id], f = o.res && o.res.barForce[b.id];
+  if (m.cfg.showLen || o.showLen) parts.push((b.group ? b.group + '=' : '') + fmt(E.barLength(m, b), 3) + ' m');
+  if (f && !o.fbd) { if (!f.known) parts.push('?'); else if (Math.abs(f.value) < 1e-7) parts.push('0 kN'); else parts.push(fmt(Math.abs(f.value), 2) + ' kN ' + (f.value > 0 ? 'T' : 'C')); }
+  return parts.join(' · ');
+}
+function drawModel(ctx, m, v, pal, o) {
+  o = o || {}; var W = o.W, H = o.H;
+  ctx.save();
+  ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+  if (o.grid) drawGrid(ctx, m, v, pal, W, H);
+  m.dims.forEach(function (d) { drawDim(ctx, m, v, pal, d, o); });
+  m.bars.forEach(function (b) { drawBar(ctx, m, v, pal, b, o); });
+  if (!o.fbd) m.nodes.forEach(function (n) { if (n.support) drawSupport(ctx, n, v, pal); });
+  m.loads.forEach(function (l) { drawLoad(ctx, m, v, pal, l, o); });
+  if (o.res && (o.res.status === 'isostatica' || o.res.status === 'hiperestatica')) drawReactions(ctx, m, v, pal, o.res);
+  m.angs.forEach(function (a) { drawAng(ctx, m, v, pal, a, o); });
+  // vista previa de barra
+  if (o.draft && o.draft.cur) {
+    var f = o.draft.from, t = o.draft.cur, x1 = sx(v, f.x), y1 = sy(v, f.y), x2 = sx(v, t.x), y2 = sy(v, t.y);
+    ctx.save(); ctx.strokeStyle = pal.sel; ctx.lineWidth = 3; ctx.setLineDash([8, 5]); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+    var L = Math.hypot(t.x - f.x, t.y - f.y), th = ((Math.atan2(t.y - f.y, t.x - f.x) / D2R) + 360) % 360;
+    var txt = fmt(L, 3) + ' m · ' + fmt(th, 1) + '°' + (t.info && t.info.group ? ' = ' + t.info.group : '');
+    label(ctx, txt, (x1 + x2) / 2, (y1 + y2) / 2 - 16, pal, { color: pal.ink, weight: '600' });
+  }
+  // nudos
+  m.nodes.forEach(function (n) {
+    var x = sx(v, n.x), y = sy(v, n.y);
+    ctx.save();
+    if (isSel(o, 'node', n.id) || (o.hover && o.hover.type === 'node' && o.hover.id === n.id)) { ctx.fillStyle = pal.sel; ctx.globalAlpha = isSel(o, 'node', n.id) ? 0.6 : 0.35; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.restore();
+    label(ctx, n.id, x - 13, y - 14, pal, { weight: '700', size: 14, font: FONT_UI, bg: false });
+  });
+  // etiquetas de barras
+  m.bars.forEach(function (b) {
+    var a = byId(m.nodes, b.a), c = byId(m.nodes, b.b);
+    var x1 = sx(v, a.x), y1 = sy(v, a.y), x2 = sx(v, c.x), y2 = sy(v, c.y);
+    var dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L; if (ny > 0) { nx = -nx; ny = -ny; }
+    var txt = barLabel(m, b, o), f = o.res && o.res.barForce[b.id];
+    var col = o.res && f && f.known ? barColor(b, pal, o.res) : pal.muted;
+    label(ctx, txt, (x1 + x2) / 2 + nx * 17, (y1 + y2) / 2 + ny * 17, pal, { color: col, weight: o.res ? '600' : '500', size: 12 });
+  });
+  ctx.restore();
+}
+function fitView(m, W, H, pad, maxS) {
+  var xs = [], ys = [];
+  m.nodes.forEach(function (n) { xs.push(n.x); ys.push(n.y); });
+  if (!xs.length) return { ox: W / 2, oy: H / 2, s: 80 };
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var bw = Math.max(x1 - x0, 0.001), bh = Math.max(y1 - y0, 0.001);
+  var px = pad + 40, py = pad + 40;
+  var s = Math.min((W - 2 * px) / bw, (H - 2 * py) / bh, maxS || 140);
+  return { s: s, ox: W / 2 - ((x0 + x1) / 2) * s, oy: H / 2 + ((y0 + y1) / 2) * s };
+}
+
+/* ============ Sólidos libres ============ */
+function nodeForces(m, res, nid) {
+  var out = [], n = byId(m.nodes, nid);
+  E.barsAt(m, nid).forEach(function (b) {
+    var o = otherEnd(m, b, nid), dx = o.x - n.x, dy = o.y - n.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+    var f = res.barForce[b.id];
+    if (!f.known) out.push({ kind: 'bar', t: b.id + ' = ?', ux: ux, uy: uy, mag: 1, unknown: true });
+    else if (Math.abs(f.value) >= 1e-7) {
+      var sgn = f.value > 0 ? 1 : -1;
+      out.push({ kind: 'bar', t: b.id + ' = ' + fmt(Math.abs(f.value), 2) + ' kN (' + (f.value > 0 ? 'T' : 'C') + ')', ux: ux * sgn, uy: uy * sgn, mag: Math.abs(f.value), fx: f.value * ux, fy: f.value * uy, tens: f.value > 0 });
+    }
+  });
+  m.loads.filter(function (l) { return l.node === nid && l.F; }).forEach(function (l) {
+    var c = Math.cos(l.ang * D2R), s = Math.sin(l.ang * D2R);
+    out.push({ kind: 'load', t: l.id + ' = ' + fmt(l.F, 2) + ' kN', ux: c, uy: s, mag: Math.abs(l.F), fx: l.F * c, fy: l.F * s });
+  });
+  var r = res.reactions[nid];
+  if (r) {
+    if (!r.known) out.push({ kind: 'react', t: 'R' + nid + ' = ?', ux: 0, uy: 1, mag: 1, unknown: true });
+    else if (n.support === 'roller') { var mg = Math.hypot(r.fx, r.fy); if (mg > 1e-7) out.push({ kind: 'react', t: 'R' + nid + ' = ' + fmt(mg, 2) + ' kN', ux: r.fx / mg, uy: r.fy / mg, mag: mg, fx: r.fx, fy: r.fy }); }
+    else {
+      if (Math.abs(r.fx) > 1e-7) out.push({ kind: 'react', t: 'R' + nid + 'x = ' + fmt(Math.abs(r.fx), 2) + ' kN', ux: Math.sign(r.fx), uy: 0, mag: Math.abs(r.fx), fx: r.fx, fy: 0 });
+      if (Math.abs(r.fy) > 1e-7) out.push({ kind: 'react', t: 'R' + nid + 'y = ' + fmt(Math.abs(r.fy), 2) + ' kN', ux: 0, uy: Math.sign(r.fy), mag: Math.abs(r.fy), fx: 0, fy: r.fy });
+    }
+  }
+  return out;
+}
+function frame(ctx, W, H, pal, title) {
+  ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
+  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(tr(title), 10, 8);
+}
+function drawNodeFBD(ctx, W, H, m, res, nid, pal) {
+  frame(ctx, W, H, pal, 'Nudo ' + nid);
+  var cx = W / 2, cy = H / 2 + 6, forces = nodeForces(m, res, nid), fmax = 0;
+  forces.forEach(function (f) { if (!f.unknown) fmax = Math.max(fmax, f.mag); });
+  var maxL = Math.min(W, H) / 2 - 40;
+  forces.forEach(function (f) {
+    var L = f.unknown ? maxL * 0.6 : 34 + (maxL - 34) * (fmax ? f.mag / fmax : 1);
+    var x2 = cx + f.ux * L, y2 = cy - f.uy * L, col = f.unknown ? pal.muted : f.kind === 'bar' ? (f.tens ? pal.tension : pal.compress) : f.kind === 'load' ? pal.load : pal.react;
+    ctx.save(); if (f.unknown) ctx.setLineDash([5, 4]); arrow(ctx, cx + f.ux * 8, cy - f.uy * 8, x2, y2, col, 2.6, 10); ctx.restore();
+    var lx = x2 + f.ux * 6, ly = y2 - f.uy * 6, w;
+    ctx.font = '600 11px ' + FONT_NUM; w = ctx.measureText(tr(f.t)).width;
+    lx = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, lx + f.ux * w / 2)); ly = Math.max(30, Math.min(H - 26, ly - f.uy * 6));
+    label(ctx, f.t, lx, ly, pal, { color: col, weight: '600', size: 11 });
+  });
+  ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill(); ctx.stroke();
+  var sfx = 0, sfy = 0, part = false; forces.forEach(function (f) { if (f.unknown) part = true; else { sfx += f.fx; sfy += f.fy; } });
+  ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(tr(part ? 'incógnitas sin resolver (hiperestática)' : 'ΣFx = ' + fmt(sfx, 3) + '   ΣFy = ' + fmt(sfy, 3) + ' kN'), 10, H - 9);
+}
+function drawBarFBD(ctx, W, H, m, res, bar, pal) {
+  frame(ctx, W, H, pal, 'Barra ' + bar.id + (bar.cable ? ' (cable)' : '') + '  ' + bar.a + '–' + bar.b);
+  var f = res.barForce[bar.id], y = H / 2 + 4, x1 = 62, x2 = W - 62;
+  ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = bar.cable ? 2.4 : 5; ctx.lineCap = 'round'; if (bar.cable) ctx.setLineDash([9, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.restore();
+  var txt, col = pal.muted;
+  if (f.known && Math.abs(f.value) >= 1e-7) {
+    var tens = f.value > 0; col = tens ? pal.tension : pal.compress;
+    if (tens) { arrow(ctx, x1 - 8, y, x1 - 50, y, col, 3, 11); arrow(ctx, x2 + 8, y, x2 + 50, y, col, 3, 11); }
+    else { arrow(ctx, x1 - 52, y, x1 - 8, y, col, 3, 11); arrow(ctx, x2 + 52, y, x2 + 8, y, col, 3, 11); }
+    txt = 'S = ' + fmt(Math.abs(f.value), 2) + ' kN  ' + (tens ? 'TRACCIÓN' : 'COMPRESIÓN');
+  } else txt = f.known ? 'S = 0 (barra de fuerza nula)' : 'S = ? (no determinable)';
+  [[x1, bar.a], [x2, bar.b]].forEach(function (p) {
+    ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(p[0], y, 6.5, 0, 7); ctx.fill(); ctx.stroke();
+    label(ctx, p[1], p[0], y + 20, pal, { weight: '700', size: 13, font: FONT_UI, bg: false });
+  });
+  label(ctx, txt, W / 2, y - 26, pal, { color: col, weight: '600', size: 12 });
+  ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('L = ' + fmt(f.L, 3) + ' m   θ = ' + fmt(E.barAngle(m, bar), 1) + '°', 10, H - 9);
+}
+function equilibriumSums(m, res) {
+  var fx = 0, fy = 0, mo = 0, ok = true;
+  m.loads.forEach(function (l) { if (l.F == null) return; var n = byId(m.nodes, l.node), c = l.F * Math.cos(l.ang * D2R), s = l.F * Math.sin(l.ang * D2R); fx += c; fy += s; mo += n.x * s - n.y * c; });
+  Object.keys(res.reactions).forEach(function (id) { var r = res.reactions[id], n = byId(m.nodes, id); if (!r.known) { ok = false; return; } fx += r.fx; fy += r.fy; mo += n.x * r.fy - n.y * r.fx; });
+  return { fx: fx, fy: fy, mo: mo, ok: ok };
+}
+function drawStructFBD(ctx, W, H, m, res, pal) {
+  var v = fitView(m, W, H - 56, 34, 110); v.oy += 22;
+  drawModel(ctx, m, v, pal, { W: W, H: H, fbd: true, res: res, showLen: false });
+  var s = equilibriumSums(m, res);
+  ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillText(tr(s.ok ? 'Equilibrio global: ΣFx = ' + fmt(s.fx, 3) + '  ΣFy = ' + fmt(s.fy, 3) + ' kN  ΣM(0,0) = ' + fmt(s.mo, 3) + ' kN·m' : 'Equilibrio global no comprobable (reacciones indeterminadas)'), 10, H - 9);
+  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textBaseline = 'top'; ctx.fillText(tr('Sólido libre de toda la estructura'), 10, 8);
+}
+
+/* ============ Estado de UI, historial y persistencia ============ */
+var hist = [], hi = -1, dpr = 1, pending = null, spaceDown = false, drag = null, raf = 0, hintOverride = '';
+var LS_KEY = 'taller-estatica-v1';
+var cv = $('cv'), ctx = cv.getContext('2d'), wrap = $('wrap');
+var ptrs = new Map(), pinch = null;
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function es(n, d) { return fmt(n, d).replace('.', ','); }
+function toast(t) {
+  var el = $('toast'); el.textContent = tr(t); el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(function () { el.classList.remove('show'); }, 2800);
+}
+function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(M)); } catch (e) { } }
+function normalizeModel(o) {
+  var f = freshModel();
+  if (!o || !Array.isArray(o.nodes) || !Array.isArray(o.bars)) return null;
+  f.nodes = o.nodes; f.bars = o.bars; f.loads = Array.isArray(o.loads) ? o.loads : []; f.groups = o.groups || {};
+  f.dims = Array.isArray(o.dims) ? o.dims : []; f.angs = Array.isArray(o.angs) ? o.angs : [];
+  Object.assign(f.cfg, o.cfg || {}); Object.assign(f.q, o.q || {});
+  return f;
+}
+function commit() {
+  cleanup(); R = null;
+  hist.length = hi + 1; hist.push(JSON.stringify(M)); if (hist.length > 120) hist.shift(); hi = hist.length - 1;
+  saveLocal(); refreshAll();
+}
+function restore(i) {
+  hi = i; M = normalizeModel(JSON.parse(hist[hi])); R = null;
+  if (sel && !selExists()) sel = null;
+  saveLocal(); refreshAll();
+}
+function selExists() {
+  if (!sel) return false;
+  var map = { node: M.nodes, bar: M.bars, load: M.loads, dim: M.dims, ang: M.angs };
+  return !!byId(map[sel.type], sel.id);
+}
+function refreshAll() {
+  syncSnapbar(); syncCables(); renderInspector(); renderGroups(); renderResults();
+  $('undo').disabled = hi <= 0; $('redo').disabled = hi >= hist.length - 1;
+  redraw();
+}
+
+/* ============ Lienzo ============ */
+function resize() {
+  dpr = window.devicePixelRatio || 1;
+  var w = wrap.clientWidth, h = wrap.clientHeight;
+  cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
+  redraw();
+}
+function redraw() { if (raf) return; raf = requestAnimationFrame(function () { raf = 0; paint(); }); }
+function paint() {
+  var W = wrap.clientWidth, H = wrap.clientHeight, pal = readPal();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var dr = draft && draft.cur ? { from: draft.from, cur: draft.cur } : null;
+  drawModel(ctx, M, view, pal, { W: W, H: H, grid: true, res: R && R.res, sel: sel, hover: hover, draft: dr });
+  if (pending && pending.hint) label(ctx, pending.hint, W / 2, 24, pal, { color: pal.ink, weight: '600', size: 13, font: FONT_UI });
+  $('hint').textContent = tr(hintOverride || hintText());
+}
+function hintText() {
+  switch (tool) {
+    case 'select': return 'Clic para seleccionar. Arrastra un nudo para moverlo, o el fondo para desplazar la vista. Rueda: zoom.';
+    case 'hand': return 'Arrastra para desplazar la vista.';
+    case 'node': return 'Clic en el lienzo para colocar un nudo.';
+    case 'bar': return draft ? 'Clic para fijar el otro extremo. Esc o clic derecho para terminar la cadena.' : 'Arrastra entre dos puntos, o haz clic en el inicio y luego en el final. Se unen solos a los nudos cercanos.';
+    case 'pin': return 'Clic en un nudo para colocar un apoyo fijo. Otro clic lo quita.';
+    case 'roller': return 'Clic en un nudo para colocar un apoyo móvil. Otro clic lo quita.';
+    case 'force': return 'Clic en un nudo para aplicar una fuerza. Ajusta valor y ángulo en Propiedades.';
+    case 'weight': return 'Clic en un nudo para colgar una masa (peso = m·g).';
+    case 'dim': return pending ? 'Clic en el segundo nudo.' : 'Clic en un nudo y luego en otro para acotar la distancia.';
+    case 'angle': return pending ? 'Clic en otra barra del mismo nudo, o en un espacio vacío para medir con la horizontal.' : 'Clic en una barra y luego en otra que comparta nudo.';
+    case 'erase': return 'Clic en un elemento para borrarlo.';
+  }
+  return '';
+}
+function toW(px, py) { return { x: (px - view.ox) / view.s, y: (view.oy - py) / view.s }; }
+function localPos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+/* ============ Imanes y ayudas ============ */
+function circleHits(c1, r1, c2, r2) {
+  var dx = c2.x - c1.x, dy = c2.y - c1.y, d = Math.hypot(dx, dy);
+  if (d < 1e-9 || d > r1 + r2 + 1e-9 || d < Math.abs(r1 - r2) - 1e-9) return [];
+  var a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h2 = r1 * r1 - a * a, h = h2 > 0 ? Math.sqrt(h2) : 0;
+  var mx = c1.x + dx * a / d, my = c1.y + dy * a / d;
+  return [{ x: mx + h * dy / d, y: my - h * dx / d }, { x: mx - h * dy / d, y: my + h * dx / d }];
+}
+function groupList() { return Object.keys(M.groups).map(function (k) { return { name: k, L: M.groups[k] }; }).filter(function (g) { return g.L > 0; }); }
+function triAssist(from, px, py) {
+  var gl = groupList(), best = null, bd = 16;
+  if (!gl.length) return null;
+  M.nodes.forEach(function (n2) {
+    if (Math.abs(n2.x - from.x) < 1e-9 && Math.abs(n2.y - from.y) < 1e-9) return;
+    gl.forEach(function (g1) {
+      gl.forEach(function (g2) {
+        circleHits(from, g1.L, n2, g2.L).forEach(function (p) {
+          var d = Math.hypot(sx(view, p.x) - px, sy(view, p.y) - py);
+          if (d < bd) { bd = d; best = { x: p.x, y: p.y, group: g1.name }; }
+        });
+      });
+    });
+  });
+  return best;
+}
+function snap(px, py, from) {
+  var c = M.cfg, s = view.s, w = toW(px, py), best = null, bd = 14;
+  M.nodes.forEach(function (n) { var d = Math.hypot(sx(view, n.x) - px, sy(view, n.y) - py); if (d < bd) { bd = d; best = n; } });
+  if (best) return { x: best.x, y: best.y, node: best.id };
+  var x = w.x, y = w.y, info = {}, step = c.grid || 0.5;
+  if (from) {
+    var tri = triAssist(from, px, py);
+    if (tri) return { x: tri.x, y: tri.y, info: { group: tri.group } };
+    var dx = x - from.x, dy = y - from.y, L = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
+    if (c.snapAng > 0 && L > 1e-6) {
+      var st = c.snapAng * D2R, cands = [Math.round(th / st) * st];
+      if (c.relAng && from.node) E.barsAt(M, from.node).forEach(function (b) {
+        var o = otherEnd(M, b, from.node), t0 = Math.atan2(o.y - from.y, o.x - from.x);
+        cands.push(t0 + Math.round((th - t0) / st) * st);
+      });
+      var bt = th, bdf = 1e9;
+      cands.forEach(function (t) { var df = Math.abs(Math.atan2(Math.sin(t - th), Math.cos(t - th))); if (df < bdf) { bdf = df; bt = t; } });
+      th = bt;
+    }
+    var matched = null;
+    if (c.snapLen) {
+      var tol = 10 / s, bg = tol;
+      groupList().forEach(function (g) { var d = Math.abs(L - g.L); if (d < bg) { bg = d; matched = g; } });
+    }
+    if (matched) { L = matched.L; info.group = matched.name; }
+    else if (c.snapGrid) L = Math.max(step, Math.round(L / step) * step);
+    x = from.x + L * Math.cos(th); y = from.y + L * Math.sin(th);
+    if (Math.abs(x) < 1e-12) x = 0; if (Math.abs(y) < 1e-12) y = 0;
+    return { x: x, y: y, info: info };
+  }
+  if (c.snapGrid) { x = Math.round(x / step) * step; y = Math.round(y / step) * step; }
+  return { x: x, y: y, info: info };
+}
+
+/* ============ Búsqueda de elementos ============ */
+function hitTest(px, py) {
+  var i, g;
+  for (i = M.nodes.length - 1; i >= 0; i--) { var n = M.nodes[i]; if (Math.hypot(sx(view, n.x) - px, sy(view, n.y) - py) <= 12) return { type: 'node', id: n.id }; }
+  for (i = M.loads.length - 1; i >= 0; i--) { g = loadGeom(M.loads[i], M, view); if (segDist(px, py, g.x0, g.y0, g.x1, g.y1) <= 8) return { type: 'load', id: M.loads[i].id }; }
+  for (i = M.angs.length - 1; i >= 0; i--) { g = angGeom(M, view, M.angs[i]); if (Math.hypot(g.lx - px, g.ly - py) <= 16) return { type: 'ang', id: M.angs[i].id }; }
+  for (i = M.dims.length - 1; i >= 0; i--) { g = dimGeom(M, view, M.dims[i]); if (segDist(px, py, g.p1.x, g.p1.y, g.p2.x, g.p2.y) <= 6 || Math.hypot(g.mid.x - px, g.mid.y - py) <= 20) return { type: 'dim', id: M.dims[i].id }; }
+  for (i = M.bars.length - 1; i >= 0; i--) {
+    var b = M.bars[i], a = byId(M.nodes, b.a), c = byId(M.nodes, b.b);
+    if (segDist(px, py, sx(view, a.x), sy(view, a.y), sx(view, c.x), sy(view, c.y)) <= 8) return { type: 'bar', id: b.id };
+  }
+  return null;
+}
+
+/* ============ Edición del modelo ============ */
+function matchGroupFor(bar) {
+  if (!M.cfg.autoGroup || bar.group) return;
+  var L = E.barLength(M, bar);
+  groupList().forEach(function (g) { if (!bar.group && Math.abs(g.L - L) < 1e-3) bar.group = g.name; });
+}
+function commitBar(from, to) {
+  var a = from.node || addNode(from.x, from.y), b = to.node || addNode(to.x, to.y);
+  if (a === b) return null;
+  var ex = M.bars.filter(function (x) { return (x.a === a && x.b === b) || (x.a === b && x.b === a); })[0];
+  if (ex) return { node: b };
+  var bar = { id: nextId(M.bars, 'B'), a: a, b: b, group: null, cable: false };
+  if (to.info && to.info.group && M.cfg.autoGroup) bar.group = to.info.group;
+  M.bars.push(bar); matchGroupFor(bar);
+  return { node: b, bar: bar };
+}
+function addLoad(nodeId, kind) {
+  var l = { id: nextId(M.loads, 'P'), node: nodeId, kind: kind, F: 10, ang: 270, mass: 1000 };
+  if (kind === 'peso') l.F = l.mass * 9.81 / 1000;
+  M.loads.push(l); return l;
+}
+function delItem(s) {
+  if (!s) return;
+  if (s.type === 'node') M.nodes = M.nodes.filter(function (n) { return n.id !== s.id; });
+  else if (s.type === 'bar') M.bars = M.bars.filter(function (b) { return b.id !== s.id; });
+  else if (s.type === 'load') M.loads = M.loads.filter(function (l) { return l.id !== s.id; });
+  else if (s.type === 'dim') M.dims = M.dims.filter(function (d) { return d.id !== s.id; });
+  else if (s.type === 'ang') M.angs = M.angs.filter(function (a) { return a.id !== s.id; });
+  if (sel && sel.type === s.type && sel.id === s.id) sel = null;
+  commit();
+}
+function moveNode(id, x, y) {
+  var n = byId(M.nodes, id); n.x = x; n.y = y;
+  var pin = {}; pin[id] = true; E.relaxGroups(M, pin);
+}
+function applyGroup(name) {
+  var first = M.bars.filter(function (b) { return b.group === name; })[0];
+  if (!first) return; var pin = {}; pin[first.a] = true; E.relaxGroups(M, pin);
+}
+
+/* ============ Punteros ============ */
+function setTool(t) {
+  tool = t; draft = null; pending = null; hintOverride = '';
+  document.querySelectorAll('.tool').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'); });
+  cv.style.cursor = t === 'hand' ? 'grab' : t === 'select' ? 'default' : t === 'erase' ? 'not-allowed' : 'crosshair';
+  redraw();
+}
+function endChain() { draft = null; redraw(); }
+cv.addEventListener('contextmenu', function (e) { e.preventDefault(); if (draft || pending) { draft = null; pending = null; redraw(); } });
+cv.addEventListener('pointerdown', function (e) {
+  cv.setPointerCapture(e.pointerId);
+  var p = localPos(e); ptrs.set(e.pointerId, p);
+  if (ptrs.size === 2) {
+    var a = Array.from(ptrs.values()); pinch = { d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), v: { ox: view.ox, oy: view.oy, s: view.s }, mx: (a[0].x + a[1].x) / 2, my: (a[0].y + a[1].y) / 2 };
+    drag = null; draft = null; return;
+  }
+  if (e.button === 2) return;
+  if (e.button === 1 || spaceDown || tool === 'hand') { drag = { type: 'pan', sx: p.x, sy: p.y, ox: view.ox, oy: view.oy }; cv.style.cursor = 'grabbing'; return; }
+  var h;
+  switch (tool) {
+    case 'select':
+      h = hitTest(p.x, p.y); sel = h;
+      if (h) {
+        if (h.type === 'node') { drag = { type: 'node', id: h.id, moved: false }; R = null; }
+        else if (h.type === 'dim') { drag = { type: 'dim', id: h.id, moved: false }; }
+        else if (h.type === 'ang') { drag = { type: 'angr', id: h.id, moved: false }; }
+        else if (h.type === 'load') {
+          var l = byId(M.loads, h.id), g = loadGeom(l, M, view);
+          if (Math.hypot(g.x1 - p.x, g.y1 - p.y) < 16 && l.kind !== 'peso') drag = { type: 'loadang', id: h.id, moved: false };
+        }
+      } else drag = { type: 'pan', sx: p.x, sy: p.y, ox: view.ox, oy: view.oy };
+      renderInspector(); redraw(); break;
+    case 'node': {
+      var s0 = snap(p.x, p.y, null);
+      if (!s0.node) { addNode(s0.x, s0.y); commit(); } else toast('Ahí ya hay un nudo.');
+      break;
+    }
+    case 'bar': {
+      var s1 = snap(p.x, p.y, draft ? draft.from : null);
+      if (!draft) { draft = { from: { x: s1.x, y: s1.y, node: s1.node }, cur: s1, down: { x: p.x, y: p.y } }; }
+      else {
+        var f = draft.from;
+        if (s1.node && s1.node === f.node) { endChain(); break; }
+        var r = commitBar(f, s1);
+        if (r) { draft = { from: { x: s1.x, y: s1.y, node: r.node }, cur: null, down: null }; commit(); } else endChain();
+      }
+      redraw(); break;
+    }
+    case 'pin': case 'roller': {
+      h = hitTest(p.x, p.y);
+      if (h && h.type === 'node') { var nd = byId(M.nodes, h.id); nd.support = nd.support === tool ? null : tool; commit(); }
+      else toast('Haz clic sobre un nudo.');
+      break;
+    }
+    case 'force': case 'weight': {
+      h = hitTest(p.x, p.y);
+      if (h && h.type === 'node') { var ld = addLoad(h.id, tool === 'weight' ? 'peso' : 'fuerza'); sel = { type: 'load', id: ld.id }; commit(); setSide('props'); }
+      else toast('Haz clic sobre un nudo.');
+      break;
+    }
+    case 'dim': {
+      h = hitTest(p.x, p.y);
+      if (!h || h.type !== 'node') { toast('Haz clic sobre un nudo.'); break; }
+      if (!pending) { pending = { node: h.id, hint: 'Elige el segundo nudo' }; }
+      else if (pending.node !== h.id) {
+        var A = pending.node, B = h.id; pending = null;
+        if (!M.dims.some(function (d) { return (d.a === A && d.b === B) || (d.a === B && d.b === A); })) {
+          var d = { id: nextId(M.dims, 'd'), a: A, b: B, off: 0.5 }; M.dims.push(d); sel = { type: 'dim', id: d.id }; commit();
+        } else toast('Esa cota ya existe.');
+      }
+      redraw(); break;
+    }
+    case 'angle': {
+      h = hitTest(p.x, p.y);
+      if (!pending) {
+        if (!h || h.type !== 'bar') { toast('Haz clic sobre una barra.'); break; }
+        var b = byId(M.bars, h.id), na = byId(M.nodes, b.a), nb = byId(M.nodes, b.b);
+        var da = Math.hypot(sx(view, na.x) - p.x, sy(view, na.y) - p.y), db = Math.hypot(sx(view, nb.x) - p.x, sy(view, nb.y) - p.y);
+        pending = { bar: b.id, node: da <= db ? b.a : b.b, hint: 'Ahora otra barra del nudo ' + (da <= db ? b.a : b.b) + ', o un espacio vacío' };
+      } else {
+        var an = null;
+        if (h && h.type === 'bar') {
+          var b2 = byId(M.bars, h.id);
+          if (b2.id === pending.bar) an = { node: pending.node, b1: pending.bar, b2: null };
+          else if (b2.a === pending.node || b2.b === pending.node) an = { node: pending.node, b1: pending.bar, b2: b2.id };
+          else toast('Esa barra no comparte el nudo ' + pending.node + '.');
+        } else if (!h) an = { node: pending.node, b1: pending.bar, b2: null };
+        if (an) { an.id = nextId(M.angs, 'a'); M.angs.push(an); sel = { type: 'ang', id: an.id }; pending = null; commit(); }
+      }
+      redraw(); break;
+    }
+    case 'erase': h = hitTest(p.x, p.y); if (h) delItem(h); break;
+  }
+});
+cv.addEventListener('pointermove', function (e) {
+  var p = localPos(e);
+  if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, p);
+  if (pinch && ptrs.size >= 2) {
+    var a = Array.from(ptrs.values()), d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y), k = d / pinch.d;
+    var ns = Math.max(8, Math.min(400, pinch.v.s * k)), wx = (pinch.mx - pinch.v.ox) / pinch.v.s, wy = (pinch.v.oy - pinch.my) / pinch.v.s;
+    var mx = (a[0].x + a[1].x) / 2, my = (a[0].y + a[1].y) / 2;
+    view.s = ns; view.ox = mx - wx * ns; view.oy = my + wy * ns; redraw(); return;
+  }
+  if (drag) {
+    if (drag.type === 'pan') { view.ox = drag.ox + p.x - drag.sx; view.oy = drag.oy + p.y - drag.sy; }
+    else if (drag.type === 'node') {
+      var w = toW(p.x, p.y), st = M.cfg.grid || 0.5;
+      var x = M.cfg.snapGrid ? Math.round(w.x / st) * st : w.x, y = M.cfg.snapGrid ? Math.round(w.y / st) * st : w.y;
+      var n = byId(M.nodes, drag.id);
+      if (Math.abs(n.x - x) > 1e-12 || Math.abs(n.y - y) > 1e-12) { moveNode(drag.id, x, y); drag.moved = true; }
+    } else if (drag.type === 'dim') {
+      var dm = byId(M.dims, drag.id), A = byId(M.nodes, dm.a), B = byId(M.nodes, dm.b), w2 = toW(p.x, p.y);
+      var dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy) || 1;
+      dm.off = Math.round(((w2.x - A.x) * (-dy / L) + (w2.y - A.y) * (dx / L)) * 20) / 20; drag.moved = true;
+    } else if (drag.type === 'angr') {
+      var an0 = byId(M.angs, drag.id), ag0 = angGeom(M, view, an0);
+      an0.r = Math.max(12, Math.min(420, Math.hypot(p.x - ag0.cx, p.y - ag0.cy) - 17)) - 26; drag.moved = true;
+    } else if (drag.type === 'loadang') {
+      var ld = byId(M.loads, drag.id), nn = byId(M.nodes, ld.node), w3 = toW(p.x, p.y);
+      var ang = Math.atan2(w3.y - nn.y, w3.x - nn.x) / D2R, stp = M.cfg.snapAng || 0;
+      if (stp) ang = Math.round(ang / stp) * stp; ld.ang = ((ang % 360) + 360) % 360; drag.moved = true;
+    }
+    redraw(); return;
+  }
+  if (tool === 'bar' && draft) {
+    draft.cur = snap(p.x, p.y, draft.from);
+    if (draft.down && Math.hypot(p.x - draft.down.x, p.y - draft.down.y) > 8) draft.dragging = true;
+    redraw(); return;
+  }
+  var h = hitTest(p.x, p.y), same = (!h && !hover) || (h && hover && h.type === hover.type && h.id === hover.id);
+  if (!same) { hover = (tool === 'select' || tool === 'erase' || tool === 'dim' || tool === 'angle' || tool === 'pin' || tool === 'roller' || tool === 'force' || tool === 'weight') ? h : null; redraw(); }
+});
+function endPointer(e) {
+  var p = localPos(e); ptrs.delete(e.pointerId);
+  if (ptrs.size < 2) pinch = null;
+  if (drag) {
+    var d = drag; drag = null; cv.style.cursor = tool === 'hand' ? 'grab' : tool === 'select' ? 'default' : 'crosshair';
+    if (d.moved) { commit(); } else if (d.type !== 'pan') { renderInspector(); }
+    redraw(); return;
+  }
+  if (tool === 'bar' && draft && draft.down) {
+    if (draft.dragging) {
+      var s = snap(p.x, p.y, draft.from), f = draft.from;
+      if (!(s.node && s.node === f.node)) {
+        var r = commitBar(f, s);
+        if (r) { draft = { from: { x: s.x, y: s.y, node: r.node }, cur: null, down: null }; commit(); } else draft = null;
+      } else draft = null;
+    } else draft.down = null;
+    redraw();
+  }
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('wheel', function (e) {
+  e.preventDefault(); var p = localPos(e), k = Math.pow(1.0015, -e.deltaY);
+  var ns = Math.max(8, Math.min(400, view.s * k)), wx = (p.x - view.ox) / view.s, wy = (view.oy - p.y) / view.s;
+  view.s = ns; view.ox = p.x - wx * ns; view.oy = p.y + wy * ns; redraw();
+}, { passive: false });
+function zoomBy(k) {
+  var W = wrap.clientWidth, H = wrap.clientHeight, ns = Math.max(8, Math.min(400, view.s * k));
+  var wx = (W / 2 - view.ox) / view.s, wy = (view.oy - H / 2) / view.s; view.s = ns; view.ox = W / 2 - wx * ns; view.oy = H / 2 + wy * ns; redraw();
+}
+function fit() { var v = fitView(M, wrap.clientWidth, wrap.clientHeight, 60, 120); view.ox = v.ox; view.oy = v.oy; view.s = v.s; redraw(); }
+$('zIn').onclick = function () { zoomBy(1.25); }; $('zOut').onclick = function () { zoomBy(0.8); }; $('zFit').onclick = fit;
+
+/* ============ Herramientas ============ */
+var ICON = {
+  select: '<path d="M5 3l12 7-5 1.5L9.5 17z"/>', hand: '<path d="M7 11V5.5a1.3 1.3 0 012.6 0V10m0-5a1.3 1.3 0 012.6 0v5m0-4a1.3 1.3 0 012.6 0v6c0 3-2 5-5 5H10c-2 0-3-1-4-3l-2-3a1.3 1.3 0 012-1.6L7 13"/>',
+  node: '<circle cx="11" cy="11" r="4.5"/>', bar: '<path d="M4 17L18 5"/><circle cx="4" cy="17" r="2.2" fill="currentColor"/><circle cx="18" cy="5" r="2.2" fill="currentColor"/>',
+  pin: '<path d="M11 5l6 9H5z"/><path d="M3 18h16M5 18l-2 2M9 18l-2 2M13 18l-2 2M17 18l-2 2"/>',
+  roller: '<path d="M11 4l5.5 8h-11z"/><circle cx="8" cy="15" r="1.7"/><circle cx="14" cy="15" r="1.7"/><path d="M3 18.5h16"/>',
+  force: '<path d="M11 3v14M6 12l5 5 5-5"/>', weight: '<path d="M11 3v7"/><path d="M8 7l3 3 3-3"/><rect x="6" y="11" width="10" height="8" rx="1"/>',
+  dim: '<path d="M3 7v8M19 7v8M3 11h16M3 11l3-2m-3 2l3 2M19 11l-3-2m3 2l-3 2"/>', angle: '<path d="M4 18h14M4 18L15 6"/><path d="M10 18a6 6 0 00-2-4.5"/>',
+  erase: '<path d="M5 5l12 12M17 5L5 17"/>'
+};
+var TOOLS = [
+  ['select', 'V', 'Seleccionar y mover'], ['hand', 'H', 'Mover la vista'], 0,
+  ['node', 'N', 'Nudo'], ['bar', 'B', 'Barra'], ['pin', 'A', 'Apoyo fijo'], ['roller', 'R', 'Apoyo móvil'], 0,
+  ['force', 'F', 'Fuerza'], ['weight', 'W', 'Peso (masa)'], 0, ['dim', 'D', 'Cota de distancia'], ['angle', 'G', 'Cota de ángulo'], 0, ['erase', 'X', 'Borrar']
+];
+(function buildTools() {
+  var box = $('tools');
+  TOOLS.forEach(function (t) {
+    if (!t) { var s = document.createElement('div'); s.className = 'tsep'; box.appendChild(s); return; }
+    var b = document.createElement('button'); b.className = 'tool'; b.dataset.tool = t[0]; b.title = trx(t[2]) + ' (' + t[1] + ')'; b.setAttribute('aria-label', trx(t[2]));
+    b.setAttribute('aria-pressed', t[0] === tool ? 'true' : 'false');
+    b.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + ICON[t[0]] + '</svg><kbd>' + t[1] + '</kbd>';
+    b.onclick = function () { setTool(t[0]); };
+    box.appendChild(b);
+  });
+})();
+document.addEventListener('keydown', function (e) {
+  var tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) { if (hi < hist.length - 1) restore(hi + 1); } else if (hi > 0) restore(hi - 1); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') { e.preventDefault(); if (hi < hist.length - 1) restore(hi + 1); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === ' ') { spaceDown = true; e.preventDefault(); return; }
+  if (e.key === 'Escape') { draft = null; pending = null; sel = null; renderInspector(); redraw(); return; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { if (sel) { e.preventDefault(); delItem(sel); } return; }
+  var k = e.key.toUpperCase();
+  TOOLS.forEach(function (t) { if (t && t[1] === k) setTool(t[0]); });
+});
+document.addEventListener('keyup', function (e) { if (e.key === ' ') spaceDown = false; });
+$('undo').onclick = function () { if (hi > 0) restore(hi - 1); };
+$('redo').onclick = function () { if (hi < hist.length - 1) restore(hi + 1); };
+
+/* ============ Barra de ayudas ============ */
+function syncSnapbar() {
+  var c = M.cfg;
+  $('sGrid').checked = c.snapGrid; $('sStep').value = String(c.grid); $('sAng').value = String(c.snapAng);
+  $('sRel').checked = c.relAng; $('sLen').checked = c.snapLen; $('sShowLen').checked = c.showLen;
+}
+$('snapbar').addEventListener('change', function () {
+  var c = M.cfg; c.snapGrid = $('sGrid').checked; c.grid = parseFloat($('sStep').value); c.snapAng = parseFloat($('sAng').value);
+  c.relAng = $('sRel').checked; c.snapLen = $('sLen').checked; c.showLen = $('sShowLen').checked;
+  saveLocal(); redraw();
+});
+
+/* ============ Pestañas ============ */
+function setSide(name) {
+  var map = { props: ['tabProps', 'paneProps'], res: ['tabRes', 'paneRes'] };
+  Object.keys(map).forEach(function (k) { $(map[k][0]).setAttribute('aria-selected', k === name ? 'true' : 'false'); $(map[k][1]).hidden = k !== name; });
+}
+$('tabProps').onclick = function () { setSide('props'); }; $('tabRes').onclick = function () { setSide('res'); };
+
+/* ============ Inspector ============ */
+function numField(k, label, v, step, extra) { return '<label class="f"><span>' + label + '</span><input data-k="' + k + '" type="number" step="' + (step || 'any') + '" value="' + (v == null ? '' : +(+v).toFixed(4)) + '"' + (extra || '') + '></label>'; }
+function renderInspector() {
+  var el = $('inspector'), h = '';
+  if (!sel || !selExists()) { el.innerHTML = tr('<p class="empty">Nada seleccionado. Elige un nudo, una barra, una fuerza o una cota para editar sus medidas.</p>'); return; }
+  if (sel.type === 'node') {
+    var n = byId(M.nodes, sel.id);
+    h = '<div class="glist"><b>Nudo ' + n.id + '</b><div class="row">' + numField('x', 'x (m)', n.x, 0.01) + numField('y', 'y (m)', n.y, 0.01) + '</div>' +
+      '<label class="f"><span>Apoyo</span><select data-k="support"><option value="">Sin apoyo</option><option value="pin"' + (n.support === 'pin' ? ' selected' : '') + '>Fijo (articulación)</option><option value="roller"' + (n.support === 'roller' ? ' selected' : '') + '>Móvil (rodillo)</option></select></label>' +
+      (n.support ? numField('normal', n.support === 'roller' ? 'Dirección de la reacción del móvil (°)' : 'Orientación del dibujo del apoyo (°)', n.normal == null ? 90 : n.normal, 1) : '') +
+      '<div class="btns"><button class="btn small" data-act="addForce">+ Fuerza</button><button class="btn small" data-act="addWeight">+ Peso</button><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+  } else if (sel.type === 'bar') {
+    var b = byId(M.bars, sel.id), others = M.bars.filter(function (x) { return x.id !== b.id; });
+    h = '<div class="glist"><b>Barra ' + b.id + ' <span style="color:var(--muted);font-weight:400">(' + b.a + '–' + b.b + ')</span></b><div class="row">' +
+      numField('len', 'Longitud (m)', E.barLength(M, b), 0.01, ' min="0.01"') + numField('ang', 'Ángulo (° desde +x)', E.barAngle(M, b), 0.5) + '</div>' +
+      '<label class="f"><span>Longitud base</span><select data-k="group"><option value="">Sin referencia (se calcula)</option>' +
+      Object.keys(M.groups).map(function (g) { return '<option value="' + esc(g) + '"' + (b.group === g ? ' selected' : '') + '>' + esc(g) + ' = ' + fmt(M.groups[g], 3) + ' m</option>'; }).join('') +
+      '<option value="__new">Nueva base con esta longitud</option></select></label>' +
+      (others.length ? '<label class="f"><span>Igualar su longitud a la de…</span><select data-k="eq"><option value="">—</option>' + others.map(function (o) { return '<option value="' + o.id + '">' + o.id + ' (' + fmt(E.barLength(M, o), 3) + ' m)</option>'; }).join('') + '</select></label>' : '') +
+      '<label class="f chk"><input type="checkbox" data-k="cable"' + (b.cable ? ' checked' : '') + '><span>Es un cable (solo tracción)</span></label>' +
+      '<div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+  } else if (sel.type === 'load') {
+    var l = byId(M.loads, sel.id);
+    h = '<div class="glist"><b>' + (l.kind === 'peso' ? 'Peso ' : 'Fuerza ') + l.id + ' <span style="color:var(--muted);font-weight:400">en el nudo ' + l.node + '</span></b>' +
+      '<label class="f"><span>Tipo</span><select data-k="kind"><option value="fuerza"' + (l.kind !== 'peso' ? ' selected' : '') + '>Fuerza</option><option value="peso"' + (l.kind === 'peso' ? ' selected' : '') + '>Peso de una masa</option></select></label>';
+    h += '<label class="f chk"><input type="checkbox" data-k="showVal"' + (l.showVal === false ? '' : ' checked') + '><span>Mostrar el valor (kN) en el dibujo</span></label>';
+    if (l.kind === 'peso') h += numField('mass', 'Masa (kg)', l.mass, 1, ' min="0"') + '<p class="empty">P = m·g con g = 9,81 m/s² = ' + es(l.F, 3) + ' kN, vertical hacia abajo.</p>';
+    else h += '<div class="row">' + numField('F', 'Valor (kN)', l.F, 0.1, l.F == null ? ' placeholder="?"' : '') + numField('ang', 'Ángulo (°)', l.ang, 1) + '</div><p class="empty">0° derecha, 90° arriba, 180° izquierda, 270° abajo. También puedes arrastrar la punta de la flecha.</p>' +
+      '<label class="f chk"><input type="checkbox" data-k="unk"' + (l.F == null ? ' checked' : '') + '><span>Sin dato (para probar el aviso de datos que faltan)</span></label>';
+    h += '<div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+  } else if (sel.type === 'dim') {
+    var d = byId(M.dims, sel.id), g = dimGeom(M, view, d);
+    h = '<div class="glist"><b>Cota ' + d.a + '–' + d.b + '</b>' + numField('val', 'Distancia (m)', g.L, 0.01, ' min="0.01"') +
+      numField('off', 'Separación de la cota (m)', d.off, 0.05) + '<p class="empty">Cambiar la distancia mueve el nudo ' + d.b + '. Si hay una barra entre ambos, se ajusta su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+  } else if (sel.type === 'ang') {
+    var an = byId(M.angs, sel.id), ag = angGeom(M, view, an);
+    h = '<div class="glist"><b>Ángulo en el nudo ' + an.node + '</b>' + numField('val', an.b2 ? tf('Entre {0} y {1} (°)', [an.b1, an.b2]) : tf('De {0} con la horizontal (°)', [an.b1]), ag.deg, 0.5, ' min="0" max="180"') +
+      numField('r', 'Distancia del arco al nudo (px)', 26 + (an.r || 0), 1, ' min="12" max="450"') + '<p class="empty">También puedes arrastrar la cota del ángulo para alejarla o acercarla. Cambiar el valor gira ' + (an.b2 ? 'la barra ' + an.b2 : 'la barra ' + an.b1) + ' alrededor del nudo ' + an.node + ', manteniendo su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+  }
+  el.innerHTML = tr(h);
+}
+function num(el) { var v = parseFloat(String(el.value).replace(',', '.')); return isFinite(v) ? v : null; }
+$('inspector').addEventListener('click', function (e) {
+  var a = e.target.closest('[data-act]'); if (!a || !sel) return;
+  if (a.dataset.act === 'del') delItem(sel);
+  else if (a.dataset.act === 'addForce' || a.dataset.act === 'addWeight') { var l = addLoad(sel.id, a.dataset.act === 'addWeight' ? 'peso' : 'fuerza'); sel = { type: 'load', id: l.id }; commit(); }
+});
+$('inspector').addEventListener('change', function (e) {
+  var el = e.target, k = el.dataset.k; if (!k || !sel) return;
+  var v = el.type === 'checkbox' ? el.checked : (el.tagName === 'SELECT' ? el.value : num(el));
+  if (sel.type === 'node') {
+    var n = byId(M.nodes, sel.id);
+    if (k === 'x' && v != null) moveNode(n.id, v, n.y); else if (k === 'y' && v != null) moveNode(n.id, n.x, v);
+    else if (k === 'support') n.support = v || null; else if (k === 'normal' && v != null) n.normal = v;
+  } else if (sel.type === 'bar') {
+    var b = byId(M.bars, sel.id);
+    if (k === 'len' && v != null && v > 0) E.setLengthSmart(M, b.id, v);
+    else if (k === 'ang' && v != null) { E.setBarAngle(M, b.id, v); var pin = {}; pin[b.a] = true; pin[b.b] = true; E.relaxGroups(M, pin); }
+    else if (k === 'group') {
+      if (v === '') b.group = null;
+      else if (v === '__new') { var nm = nextGroupName(); M.groups[nm] = E.barLength(M, b); b.group = nm; }
+      else { b.group = v; E.setBarLength(M, b.id, M.groups[v]); var p2 = {}; p2[b.a] = true; E.relaxGroups(M, p2); }
+    } else if (k === 'eq' && v) { E.linkEqual(M, v, b.id); }
+    else if (k === 'cable') b.cable = v;
+  } else if (sel.type === 'load') {
+    var l = byId(M.loads, sel.id);
+    if (k === 'kind') { l.kind = v; if (v === 'peso') { l.ang = 270; l.F = l.mass * 9.81 / 1000; } }
+    else if (k === 'mass' && v != null && v >= 0) { l.mass = v; l.F = v * 9.81 / 1000; }
+    else if (k === 'F' && v != null) l.F = v; else if (k === 'ang' && v != null) l.ang = ((v % 360) + 360) % 360;
+    else if (k === 'unk') l.F = v ? null : 10;
+    else if (k === 'showVal') l.showVal = v;
+  } else if (sel.type === 'dim') {
+    var d = byId(M.dims, sel.id);
+    if (k === 'off' && v != null) d.off = v;
+    else if (k === 'val' && v != null && v > 0) {
+      var bar = M.bars.filter(function (x) { return (x.a === d.a && x.b === d.b) || (x.a === d.b && x.b === d.a); })[0];
+      if (bar) E.setLengthSmart(M, bar.id, v);
+      else { var A = byId(M.nodes, d.a), B = byId(M.nodes, d.b), L = Math.hypot(B.x - A.x, B.y - A.y) || 1; moveNode(B.id, A.x + (B.x - A.x) / L * v, A.y + (B.y - A.y) / L * v); }
+    }
+  } else if (sel.type === 'ang') {
+    var an = byId(M.angs, sel.id);
+    if (k === 'r' && v != null) an.r = Math.max(12, Math.min(450, v)) - 26;
+    else if (k === 'val' && v != null && v >= 0 && v <= 180) {
+      var b1 = byId(M.bars, an.b1), n0 = byId(M.nodes, an.node), o1 = otherEnd(M, b1, an.node), t1 = Math.atan2(o1.y - n0.y, o1.x - n0.x);
+      var tgt = an.b2 ? byId(M.bars, an.b2) : b1, ot = otherEnd(M, tgt, an.node), t2 = Math.atan2(ot.y - n0.y, ot.x - n0.x);
+      var ref = an.b2 ? t1 : 0, cur = Math.atan2(Math.sin(t2 - ref), Math.cos(t2 - ref)), sgn = cur >= 0 ? 1 : -1, Lb = Math.hypot(ot.x - n0.x, ot.y - n0.y);
+      var nt = ref + sgn * v * D2R; ot.x = n0.x + Lb * Math.cos(nt); ot.y = n0.y + Lb * Math.sin(nt);
+      var pn = {}; pn[n0.id] = true; pn[ot.id] = true; E.relaxGroups(M, pn);
+    }
+  }
+  commit();
+});
+
+/* ============ Longitudes base ============ */
+function renderGroups() {
+  var el = $('groups'), names = Object.keys(M.groups);
+  if (!names.length) { el.innerHTML = tr('<p class="empty">Todavía no hay longitudes base. Las longitudes se calculan a partir de la geometría.</p>'); return; }
+  el.innerHTML = tr(names.map(function (g) {
+    var cnt = M.bars.filter(function (b) { return b.group === g; }).length;
+    return '<div class="grow" data-g="' + esc(g) + '"><label class="f"><span>Nombre (' + cnt + (cnt === 1 ? ' barra' : ' barras') + ')</span><input data-gk="name" type="text" value="' + esc(g) + '"></label>' +
+      '<label class="f"><span>Longitud (m)</span><input data-gk="val" type="number" step="any" min="0.01" value="' + +(+M.groups[g]).toFixed(4) + '"></label><button class="btn small danger" data-gdel="' + esc(g) + '" title="Quitar esta longitud base">✕</button></div>';
+  }).join(''));
+}
+$('groups').addEventListener('change', function (e) {
+  var row = e.target.closest('[data-g]'), k = e.target.dataset.gk; if (!row || !k) return;
+  var g = row.dataset.g;
+  if (k === 'val') { var v = num(e.target); if (v && v > 0) { M.groups[g] = v; applyGroup(g); commit(); } else renderGroups(); }
+  else if (k === 'name') {
+    var nn = e.target.value.trim();
+    if (!nn || (nn !== g && M.groups[nn] != null)) { toast('Ese nombre ya existe o está vacío.'); renderGroups(); return; }
+    M.groups[nn] = M.groups[g]; if (nn !== g) delete M.groups[g]; M.bars.forEach(function (b) { if (b.group === g) b.group = nn; }); commit();
+  }
+});
+$('groups').addEventListener('click', function (e) {
+  var g = e.target.closest('[data-gdel]'); if (!g) return; var name = g.dataset.gdel;
+  M.bars.forEach(function (b) { if (b.group === name) b.group = null; }); delete M.groups[name]; commit();
+});
+$('addGroup').onclick = function () { M.groups[nextGroupName()] = 1; commit(); };
+
+function setToolTitles() {
+  document.querySelectorAll('.tool').forEach(function (b) {
+    TOOLS.forEach(function (t) { if (t && t[0] === b.dataset.tool) { b.title = trx(t[2]) + ' (' + t[1] + ')'; b.setAttribute('aria-label', trx(t[2])); } });
+  });
+}
+
+/* ============ Comprobación de datos ============ */
+function qEff() { return { type: 'all_bars', bar: '', node: '', sigma: 0, fy: 0, safety: 0 }; }
+function checkData() {
+  var res = E.analyze(M), miss = [];
+  if (res.status === 'vacio') return { res: res, miss: res.messages.slice() };
+  miss = E.checkMissing(M, res, qEff());
+  M.loads.forEach(function (l) { if (l.F == null) miss.push('La carga ' + l.id + ' no tiene valor.'); });
+  return { res: res, miss: miss };
+}
+function statusText(res) {
+  var cnt = res.nBars + ' barras + ' + res.nReact + ' reacciones ' + (res.nBars + res.nReact === 2 * res.nNodes ? '=' : res.nBars + res.nReact > 2 * res.nNodes ? '>' : '<') + ' 2 × ' + res.nNodes + ' nudos.';
+  if (res.status === 'isostatica') return 'Estructura isostática (' + cnt + ')';
+  if (res.status === 'hiperestatica') return 'Estructura hiperestática de grado ' + res.degree + ' (' + cnt + ')';
+  if (res.status === 'mecanismo') return 'Es un mecanismo.';
+  return '';
+}
+
+/* ============ Cables ============ */
+function numQ(s) { var v = parseFloat(String(s).replace(',', '.')); return isFinite(v) ? v : 0; }
+function syncCables() { $('cSigma').value = M.q.sigma || ''; $('cFy').value = M.q.fy || ''; $('cN').value = M.q.safety || ''; }
+['cSigma', 'cFy', 'cN'].forEach(function (id) {
+  $(id).addEventListener('change', function () { M.q.sigma = $('cSigma').value; M.q.fy = $('cFy').value; M.q.safety = $('cN').value; saveLocal(); renderResults(); });
+});
+function sigmaAdm() { var s = numQ(M.q.sigma), fy = numQ(M.q.fy), n = numQ(M.q.safety); return s > 0 ? s : (fy > 0 && n > 0 ? fy / n : 0); }
+function cableRows(res) {
+  var sg = sigmaAdm();
+  return M.bars.filter(function (b) { return b.cable; }).map(function (b) {
+    var f = res.barForce[b.id], r = { id: b.id, known: f.known, S: f.value, sigma: sg };
+    if (!f.known) { r.msg = 'esfuerzo no determinable (estructura hiperestática)'; return r; }
+    r.F = Math.abs(f.value);
+    if (f.value < -1e-7) { r.msg = 'está a compresión (' + fmt(r.F, 3) + ' kN): un cable no puede trabajar así'; return r; }
+    if (r.F < 1e-7) { r.msg = 'esfuerzo nulo: no necesita sección'; return r; }
+    if (!(sg > 0)) { r.msg = 'falta σadm (o fy y n) para calcular el diámetro'; return r; }
+    r.A = r.F * 1000 / sg; r.d = Math.sqrt(4 * r.A / Math.PI); return r;
+  });
+}
+function cableLine(r) {
+  if (r.d != null) return 'Cable ' + r.id + ': S = ' + fmt(r.F, 3) + ' kN, σadm = ' + fmt(r.sigma, 2) + ' MPa, A = ' + fmt(r.A, 2) + ' mm², diámetro mínimo d = ' + fmt(r.d, 2) + ' mm';
+  return 'Cable ' + r.id + ': ' + r.msg;
+}
+
+/* ============ Cálculo y resultados ============ */
+function calculate() {
+  var c = checkData();
+  if (c.res.status === 'vacio') { toast(c.miss[0]); return; }
+  R = { res: c.res, miss: c.miss, ans: null, q: qEff() };
+  renderResults(); setSide('res'); redraw();
+  if (c.miss.length) toast('Faltan datos: revisa el panel de resultados.');
+  else if (c.res.status === 'isostatica' || c.res.status === 'hiperestatica') { var s = $('results'); if (s && !s.hidden && window.matchMedia('(max-width:900px)').matches) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+$('btnCalc').onclick = calculate;
+function typeCell(f) { if (!f.known) return '<span class="tc">?</span>'; if (Math.abs(f.value) < 1e-7) return '<span class="tc">nula</span>'; return f.value > 0 ? '<span class="tc t">Tracción</span>' : '<span class="tc c">Compresión</span>'; }
+function renderResults() {
+  var box = $('resBox'), sec = $('results');
+  if (!R) { box.innerHTML = tr('<p class="empty">Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres. Si falta algún dato, el programa te dirá cuál.</p>'); sec.hidden = true; return; }
+  var res = R.res, h = '', cls = res.status === 'isostatica' ? 'ok' : res.status === 'hiperestatica' ? 'warn' : 'bad';
+  var name = { isostatica: 'Isostática', hiperestatica: 'Hiperestática', mecanismo: 'Mecanismo', inestable: 'No equilibrada' }[res.status];
+  h += '<div class="msgs"><div><span class="badge ' + cls + '">' + name + '</span></div>';
+  if (res.status !== 'isostatica') res.messages.forEach(function (m) { h += '<div class="msg ' + cls + '">' + esc(m) + '</div>'; });
+  else h += '<div class="msg ok">' + statusText(res) + '</div>';
+  if (R.miss.length) h += '<div class="msg bad"><b>Faltan datos para calcular:</b><ul>' + R.miss.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
+  res.warnings.forEach(function (m) { h += '<div class="msg warn">' + esc(m) + '</div>'; });
+  h += '</div>';
+  if (R.ans) h += '<div class="sec"><h3>Respuesta</h3><div class="card answer">' + R.ans.lines.map(function (l, i) { return (i === 0 ? '<b>' + esc(l) + '</b>' : esc(l)); }).join('<br>') + '</div></div>';
+  if (res.status === 'isostatica' || res.status === 'hiperestatica') {
+    h += '<div class="sec"><h3>Barras</h3><table class="res"><thead><tr><th>Barra</th><th>L (m)</th><th>S (kN)</th><th>Esfuerzo</th></tr></thead><tbody>' +
+      M.bars.map(function (b) { var f = res.barForce[b.id]; return '<tr><td>' + b.id + '</td><td>' + fmt(f.L, 3) + '</td><td>' + (f.known ? fmt(Math.abs(f.value), 3) : '?') + '</td><td>' + typeCell(f) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    var cr = cableRows(res);
+    if (cr.length) h += '<div class="sec"><h3>Cables</h3>' + cr.map(function (r) { return '<div class="card answer" style="margin-bottom:6px">' + (r.d != null ? '<b>Cable ' + r.id + ': d = ' + fmt(r.d, 2) + ' mm</b><br>S = ' + fmt(r.F, 3) + ' kN · σadm = ' + fmt(r.sigma, 2) + ' MPa<br>A = S / σadm = ' + fmt(r.A, 2) + ' mm²' : '<b>Cable ' + r.id + '</b><br>' + esc(r.msg)) + '</div>'; }).join('') + '</div>';
+    var rk = Object.keys(res.reactions);
+    if (rk.length) h += '<div class="sec"><h3>Reacciones</h3><table class="res"><thead><tr><th>Nudo</th><th>Rx (kN)</th><th>Ry (kN)</th><th>|R| (kN)</th></tr></thead><tbody>' +
+      rk.map(function (id) { var r = res.reactions[id]; return '<tr><td>' + id + '</td><td>' + (r.known ? fmt(r.fx, 3) : '?') + '</td><td>' + (r.known ? fmt(r.fy, 3) : '?') + '</td><td>' + (r.known ? fmt(Math.hypot(r.fx, r.fy), 3) : '?') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
+  box.innerHTML = tr(h);
+  if (res.status === 'isostatica' || res.status === 'hiperestatica') { sec.hidden = false; renderFBD(); } else sec.hidden = true;
+}
+function mkCanvas(parent, w, h, drawFn) {
+  var d = window.devicePixelRatio || 1, c = document.createElement('canvas'); c.width = Math.round(w * d); c.height = Math.round(h * d);
+  var g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); drawFn(g, w, h);
+  var card = document.createElement('div'); card.className = 'fbd-card'; card.appendChild(c); parent.appendChild(card);
+}
+function renderFBD() {
+  if (!R) return;
+  var pal = readPal(), res = R.res;
+  var s = $('fbdStruct'), n = $('fbdNodes'), b = $('fbdBars'); s.innerHTML = n.innerHTML = b.innerHTML = '';
+  mkCanvas(s, 620, 380, function (g, w, h) { drawStructFBD(g, w, h, M, res, pal); });
+  M.nodes.forEach(function (nd) { mkCanvas(n, 280, 240, function (g, w, h) { drawNodeFBD(g, w, h, M, res, nd.id, pal); }); });
+  M.bars.forEach(function (bar) { mkCanvas(b, 280, 140, function (g, w, h) { drawBarFBD(g, w, h, M, res, bar, pal); }); });
+}
+
+/* ============ Exportar PNG / archivos ============ */
+function showModal(html) { $('modalBox').innerHTML = tr(html + '<div class="btns"><button class="btn" id="mClose">Cerrar</button></div>'); $('modal').hidden = false; $('mClose').onclick = function () { $('modal').hidden = true; }; }
+$('modal').addEventListener('click', function (e) { if (e.target === $('modal')) $('modal').hidden = true; });
+async function deliver(filename, data, kind, preview) {
+  var dl = null;
+  try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dl = null; }
+  if (dl) {
+    try { await dl.save({ filename: filename, data: data }); toast('Guardado: ' + filename); return; }
+    catch (err) { if (err && err.code === 'declined') { toast('Descarga cancelada.'); return; } }
+  }
+  if (kind === 'png') showModal('<b>' + esc(filename) + '</b><img alt="Imagen exportada" src="' + preview + '"><p class="empty">Mantén pulsada la imagen (móvil) o haz clic derecho y elige «Guardar imagen como…».</p>');
+  else showModal('<b>' + esc(filename) + '</b><textarea readonly>' + esc(data) + '</textarea><p class="empty">Copia el texto y guárdalo en un archivo .json.</p>');
+}
+async function savePng(canvas, filename) {
+  var blob = await new Promise(function (r) { canvas.toBlob(r, 'image/png'); });
+  await deliver(filename, blob, 'png', canvas.toDataURL('image/png'));
+}
+async function exportScheme() {
+  if (!M.nodes.length) { toast('No hay nada que exportar.'); return; }
+  try { await document.fonts.ready; } catch (e) { }
+  var xs = M.nodes.map(function (n) { return n.x; }), ys = M.nodes.map(function (n) { return n.y; });
+  var bw = Math.max(Math.max.apply(null, xs) - Math.min.apply(null, xs), 0.5), bh = Math.max(Math.max.apply(null, ys) - Math.min.apply(null, ys), 0.5);
+  var s = Math.max(40, Math.min(150, 1000 / (bw + 2.5))), W = Math.round(Math.max(640, (bw + 2.6) * s + 140)), H = Math.round(Math.max(420, (bh + 2.6) * s + 160));
+  var c = document.createElement('canvas'), k = 2; c.width = W * k; c.height = H * k;
+  var g = c.getContext('2d'); g.scale(k, k);
+  var v = { s: s, ox: W / 2 - (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2 * s, oy: H / 2 + (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 * s };
+  drawModel(g, M, v, EXPORT_PAL, { W: W, H: H, grid: false, res: R && R.res });
+  await savePng(c, 'esquema-estatica.png');
+}
+async function exportSheet() {
+  if (!M.nodes.length) { toast('No hay nada que exportar.'); return; }
+  try { await document.fonts.ready; } catch (e) { }
+  var c0 = checkData(); R = { res: c0.res, miss: c0.miss, ans: null, q: qEff() };
+  renderResults();
+  var pal = EXPORT_PAL, W = 1240, mar = 40, inner = W - 2 * mar, res = R.res, ok = res.status === 'isostatica' || res.status === 'hiperestatica';
+  var mc = document.createElement('canvas').getContext('2d'), ops = [], y = mar;
+  function add(h, fn) { ops.push({ y: y, h: h, fn: fn }); y += h; }
+  mc.font = '400 15px ' + FONT_UI;
+  add(34, function (g, y0) { g.font = '700 26px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(tr('Ejercicio de estática'), mar, y0); });
+  var dh = 420;
+  add(dh + 14, function (g, y0) { var v = fitView(M, inner, dh, 70, 130); g.save(); g.translate(mar, y0); g.beginPath(); g.rect(0, 0, inner, dh); g.clip(); drawModel(g, M, v, pal, { W: inner, H: dh, grid: false, res: ok ? res : null }); g.restore(); g.strokeStyle = pal.gridMajor; g.lineWidth = 1; g.strokeRect(mar + 0.5, y0 + 0.5, inner - 1, dh - 1); });
+  if (ok || R.miss.length) {
+    var lines = ['FALTAN DATOS'].concat(R.miss);
+    if (ok && !R.miss.length) {
+      lines = ['RESULTADOS', statusText(res)].concat(E.answer(M, res, { type: 'all_bars' }).lines);
+      cableRows(res).forEach(function (r, i) { if (i === 0) lines.push('CABLES'); lines.push(cableLine(r)); });
+      Object.keys(res.reactions).forEach(function (id) { var r = res.reactions[id]; lines.push(r.known ? 'Reacción en ' + id + ': Rx = ' + fmt(r.fx, 3) + ' kN, Ry = ' + fmt(r.fy, 3) + ' kN' : 'Reacción en ' + id + ': no determinable'); });
+    }
+    mc.font = '400 15px ' + FONT_NUM; var wl = []; lines.forEach(function (l) { wrapText(mc, tr(l), inner).forEach(function (x) { wl.push(x); }); });
+    add(wl.length * 22 + 16, function (g, y0) { g.textAlign = 'left'; g.textBaseline = 'top'; wl.forEach(function (l, i) { g.font = (i === 0 ? '700 16px ' + FONT_UI : '400 14px ' + FONT_NUM); g.fillStyle = R.miss.length ? pal.compress : pal.ink; g.fillText(l, mar, y0 + i * 22); }); });
+  }
+  if (ok) {
+    var gap = 14, cols = 4, cw = Math.floor((inner - gap * (cols - 1)) / cols);
+    add(24, function (g, y0) { g.font = '700 17px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(tr('Diagramas de sólido libre'), mar, y0); });
+    add(400 + gap, function (g, y0) { g.save(); g.translate(mar, y0); drawStructFBD(g, inner, 400, M, res, pal); g.strokeStyle = pal.gridMajor; g.strokeRect(0.5, 0.5, inner - 1, 399); g.restore(); });
+    var rows = Math.ceil(M.nodes.length / cols), ch = Math.round(cw * 240 / 280);
+    for (var r = 0; r < rows; r++) (function (r) { add(ch + gap, function (g, y0) { for (var i = r * cols; i < Math.min(M.nodes.length, (r + 1) * cols); i++) { var x = mar + (i - r * cols) * (cw + gap); g.save(); g.translate(x, y0); g.beginPath(); g.rect(0, 0, cw, ch); g.clip(); g.scale(cw / 280, ch / 240); drawNodeFBD(g, 280, 240, M, res, M.nodes[i].id, pal); g.restore(); g.strokeStyle = pal.gridMajor; g.strokeRect(x + 0.5, y0 + 0.5, cw - 1, ch - 1); } }); })(r);
+    var brows = Math.ceil(M.bars.length / cols), bch = Math.round(cw * 140 / 280);
+    for (var q = 0; q < brows; q++) (function (q) { add(bch + gap, function (g, y0) { for (var i = q * cols; i < Math.min(M.bars.length, (q + 1) * cols); i++) { var x = mar + (i - q * cols) * (cw + gap); g.save(); g.translate(x, y0); g.beginPath(); g.rect(0, 0, cw, bch); g.clip(); g.scale(cw / 280, bch / 140); drawBarFBD(g, 280, 140, M, res, M.bars[i], pal); g.restore(); g.strokeStyle = pal.gridMajor; g.strokeRect(x + 0.5, y0 + 0.5, cw - 1, bch - 1); } }); })(q);
+  }
+  var H = y + mar, c = document.createElement('canvas'), k = 1.5; c.width = Math.round(W * k); c.height = Math.round(H * k);
+  var g = c.getContext('2d'); g.scale(k, k); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+  ops.forEach(function (o) { g.save(); o.fn(g, o.y); g.restore(); });
+  await savePng(c, 'hoja-estatica.png');
+}
+$('btnPng').onclick = exportScheme; $('btnSheet').onclick = exportSheet;
+$('btnSave').onclick = function () { deliver('ejercicio-estatica.json', JSON.stringify(M, null, 1), 'json'); };
+$('btnOpen').onclick = function () { $('fileIn').click(); };
+$('fileIn').addEventListener('change', function () {
+  var f = $('fileIn').files[0]; if (!f) return; var fr = new FileReader();
+  fr.onload = function () { try { var m = normalizeModel(JSON.parse(fr.result)); if (!m) throw 0; M = m; sel = null; commit(); fit(); toast('Ejercicio cargado.'); } catch (e) { toast('El archivo no es un ejercicio válido.'); } $('fileIn').value = ''; };
+  fr.readAsText(f);
+});
+
+/* ============ Ejemplos ============ */
+function N(id, x, y, sup, normal) { return { id: id, x: x, y: y, support: sup || null, normal: normal == null ? 90 : normal }; }
+function Bz(id, a, b, g, cable) { return { id: id, a: a, b: b, group: g || null, cable: !!cable }; }
+function Ld(id, node, F, ang, kind, mass) { return { id: id, node: node, F: F, ang: ang, kind: kind || 'fuerza', mass: mass || 1000 }; }
+var EXAMPLES = {
+  warren: function () {
+    var m = freshModel(), h = Math.sqrt(3);
+    m.nodes = [N('A', 0, 0, 'pin'), N('B', 2, 0), N('C', 4, 0, 'roller'), N('D', 1, h), N('E', 3, h)];
+    m.bars = [Bz('B1', 'A', 'B', 'L1'), Bz('B2', 'B', 'C', 'L1'), Bz('B3', 'A', 'D', 'L1'), Bz('B4', 'D', 'B', 'L1'), Bz('B5', 'B', 'E', 'L1'), Bz('B6', 'E', 'C', 'L1'), Bz('B7', 'D', 'E', 'L1')];
+    m.groups = { L1: 2 };
+    m.loads = [Ld('P1', 'D', 12, 270), Ld('P2', 'E', 9.81, 270, 'peso', 1000)];
+    m.dims = [{ id: 'd1', a: 'A', b: 'C', off: -0.7 }]; m.angs = [{ id: 'a1', node: 'A', b1: 'B1', b2: 'B3' }];
+    m.q.title = 'Cercha Warren'; m.q.type = 'all_bars'; return m;
+  },
+  grua: function () {
+    var m = freshModel();
+    m.nodes = [N('A', 0, 0, 'pin', 0), N('B', 3, 0), N('C', 0, 4, 'pin', 0)];
+    m.bars = [Bz('B1', 'A', 'B'), Bz('B2', 'B', 'C', null, true)];
+    m.loads = [Ld('P1', 'B', 20, 270)];
+    m.dims = [{ id: 'd1', a: 'A', b: 'B', off: -0.6 }, { id: 'd2', a: 'A', b: 'C', off: -0.8 }];
+    m.q.title = 'Pescante con cable'; m.q.type = 'cable_diameter'; m.q.bar = 'B2'; m.q.sigma = '150'; return m;
+  },
+  triangulo: function () {
+    var m = freshModel();
+    m.nodes = [N('A', 0, 0, 'pin'), N('B', 1, 0, 'roller'), N('C', 0.5, Math.sqrt(3) / 2)];
+    m.bars = [Bz('B1', 'A', 'B', 'L1'), Bz('B2', 'A', 'C', 'L1'), Bz('B3', 'B', 'C', 'L1')]; m.groups = { L1: 1 };
+    m.loads = [Ld('P1', 'C', 5, 270)]; m.q.title = 'Triángulo equilátero'; m.q.type = 'force_bar'; m.q.bar = 'B3'; return m;
+  },
+  hiper: function () {
+    var m = freshModel();
+    m.nodes = [N('A', 0, 0, 'pin'), N('B', 4, 0, 'pin'), N('C', 2, 2)];
+    m.bars = [Bz('B1', 'A', 'B'), Bz('B2', 'A', 'C'), Bz('B3', 'B', 'C')]; m.loads = [Ld('P1', 'C', 10, 270)];
+    m.q.title = 'Con un apoyo de más'; m.q.type = 'force_bar'; m.q.bar = 'B1'; return m;
+  }
+};
+function loadModel(m) { M = m; sel = null; draft = null; pending = null; commit(); fit(); }
+$('examples').addEventListener('change', function () { var k = $('examples').value; if (k && EXAMPLES[k]) { loadModel(EXAMPLES[k]()); toast('Ejemplo cargado. Puedes deshacer con Ctrl+Z.'); } $('examples').value = ''; });
+$('btnNew').onclick = function () { loadModel(freshModel()); toast('Lienzo vacío.'); };
+
+/* ============ Arranque ============ */
+var DOMSTORE = [];
+function collectDom() {
+  var skip = '#inspector,#groups,#resBox,#modalBox,#tools,#fbdStruct,#fbdNodes,#fbdBars,[data-notr],script,style';
+  var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n;
+  while ((n = w.nextNode())) { if (n.nodeValue.trim() && !(n.parentNode.closest && n.parentNode.closest(skip))) DOMSTORE.push({ n: n, orig: n.nodeValue }); }
+  document.querySelectorAll('[title],[placeholder],[aria-label]').forEach(function (el) {
+    if (el.closest(skip)) return;
+    ['title', 'placeholder', 'aria-label'].forEach(function (a) { if (el.hasAttribute(a)) DOMSTORE.push({ el: el, a: a, orig: el.getAttribute(a) }); });
+  });
+}
+function applyLang(l) {
+  setLangData(l); document.documentElement.lang = l;
+  DOMSTORE.forEach(function (d) {
+    var t = d.orig.trim(), tt = trx(t);
+    if (d.n) d.n.nodeValue = d.orig.replace(t, tt); else d.el.setAttribute(d.a, d.orig.replace(t, tt));
+  });
+  setToolTitles(); $('lang').value = l;
+  try { localStorage.setItem('taller-lang', l); } catch (e) { }
+  refreshAll(); if (R) renderFBD(); redraw();
+}
+$('lang').addEventListener('change', function () { applyLang($('lang').value); });
+function initLang() {
+  var l = null;
+  try { l = localStorage.getItem('taller-lang'); } catch (e) { }
+  if (l !== 'es' && l !== 'ca' && l !== 'en') { var nl = (navigator.language || 'es').toLowerCase(); l = nl.indexOf('ca') === 0 ? 'ca' : nl.indexOf('en') === 0 ? 'en' : 'es'; }
+  collectDom(); setLangData('es'); if (l !== 'es') applyLang(l);
+}
+function init() {
+  var loaded = null;
+  try { var raw = localStorage.getItem(LS_KEY); if (raw) loaded = normalizeModel(JSON.parse(raw)); } catch (e) { loaded = null; }
+  if (loaded && loaded.nodes.length) M = loaded; else M = EXAMPLES.warren();
+  hist = [JSON.stringify(M)]; hi = 0;
+  new ResizeObserver(function () { resize(); }).observe(wrap);
+  resize(); fit(); refreshAll(); setTimeout(fit, 150); initLang();
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { redraw(); if (R) renderFBD(); }); } catch (e) { }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { redraw(); if (R) renderFBD(); });
+  window.__taller = { get M() { return M; }, get R() { return R; }, calculate: calculate, E: E };
+}
+init();
+})();
+
+</script>
+
+</body></html>
