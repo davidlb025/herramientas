@@ -11,12 +11,17 @@ y las aplicaciones, cada una en su propia carpeta.
   licencias, favicon y captura real de la aplicación incrustados.
 - `estatica_maquinas/index.html`: nueva versión del Taller de Estática facilitada
   por David, con temas claro/oscuro y enlace de regreso al hub.
+- `pizarradt/index.html`: Pizarra DT, taller de dibujo técnico con construcciones
+  geométricas, capas, importación de PDF e imágenes y exportación PDF / PNG / SVG.
+  Conserva su interfaz en español y permite volver al hub con el idioma de entrada.
 - `.nojekyll`: sirve los archivos directamente en GitHub Pages.
 - `.gitignore`: excluye contexto local, pruebas, cachés, dependencias y paquetes.
 
-La portada es la captura PNG facilitada por David, de **1891 × 909 píxeles**,
-incrustada sin recomprimir y mostrada completa, conservando su proporción original.
-No es una imagen generada ni representa resultados calculados por el hub.
+Las portadas son capturas reales incrustadas en el HTML, de **1891 × 909 píxeles**,
+mostradas completas y con su proporción original. El Taller de Estática conserva
+la imagen PNG facilitada por David, sin recomprimir. La portada de Pizarra DT
+muestra su ejemplo integrado «Estudio de construcciones». No son imágenes
+generadas ni representan resultados calculados por el hub.
 El hub no necesita fuentes, imágenes, scripts o estilos externos. La aplicación
 conserva las fuentes de Google Fonts que utiliza la versión facilitada.
 
@@ -34,8 +39,8 @@ conserva las fuentes de Google Fonts que utiliza la versión facilitada.
 4. Incluir una imagen real y su texto alternativo. Para mantener el hub en un
    solo archivo se puede usar una imagen como URI `data:`; también se admite
    una ruta relativa a una imagen dentro de la carpeta de la aplicación.
-   La portada actual está en el metadato `id="statics-cover"`.
-   Actualizar también el enlace de respaldo en `<noscript>` si se cambia la primera aplicación.
+   Las portadas están en los metadatos `id="statics-cover"` y `id="pizarra-cover"`.
+   Añadir también el enlace de respaldo de la nueva aplicación en `<noscript>`.
 5. Subir los cambios. No hay compilación ni dependencias que instalar.
 
 El buscador consulta nombre, descripción, categoría y etiquetas e ignora tildes.
@@ -61,6 +66,6 @@ servidor y bajo `/herramientas/`. Los enlaces al portafolio apuntan a `/`, como
 corresponde al despliegue real; un servidor aislado del hub no incluye el portafolio.
 
 La búsqueda, idiomas y catálogo funcionan en el navegador. Sin JavaScript se
-mantiene el enlace directo al Taller de Estática.
+mantienen enlaces directos al Taller de Estática y a Pizarra DT.
 
-El hub y el Taller de Estática incluyen el mismo favicon del portafolio incrustado en sus HTML. No requieren una carpeta assets ni un archivo de favicon externo.
+El hub, el Taller de Estática y Pizarra DT incluyen el mismo favicon del portafolio incrustado en sus HTML. No requieren una carpeta assets ni un archivo de favicon externo.

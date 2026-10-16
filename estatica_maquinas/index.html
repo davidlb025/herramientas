@@ -112,10 +112,11 @@ select.btn{padding-right:4px}
 .badge.bad{background:var(--bad-bg);color:var(--bad)}
 table.res{width:100%;border-collapse:collapse;font-size:13px}
 table.res th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--line)}
-table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--font-num);font-variant-numeric:tabular-nums}
+table.res td{overflow-wrap:anywhere;padding:4px;border-bottom:1px solid var(--line);font-family:var(--font-num);font-variant-numeric:tabular-nums}
 .tc{font-family:var(--font-ui);font-weight:700;font-size:12px}
 .tc.t{color:var(--tension)}.tc.c{color:var(--compress)}
 .answer{font-family:var(--font-num);font-size:13px;line-height:1.7}
+.number{white-space:nowrap}.number math{font-size:1.08em}table.res td:first-child{max-width:110px}.f input[data-k="name"],.f input[data-k="supportName"]{font-family:var(--font-ui)}
 .answer b{font-family:var(--font-ui);font-size:14px}
 
 .results{margin-top:18px}
@@ -133,6 +134,23 @@ table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--f
 .modal img{max-width:100%;height:auto;background:#fff;border-radius:4px}
 .modal textarea{width:100%;min-height:200px;font-family:var(--font-num);font-size:12px}
 
+.annotation-menu{width:min(680px,calc(100vw - 64px));display:flex;flex-direction:column;gap:12px}
+.annotation-menu h2{margin:0;font-size:21px}
+.annotation-menu p{margin:0}
+.annotation-controls{border:0;padding:0;margin:0;min-width:0;display:flex;flex-direction:column;gap:12px}
+.annotation-list{max-height:min(38svh,340px);overflow:auto;padding-right:5px;scrollbar-color:var(--line) var(--panel)}
+.annotation-group{margin:0 0 12px;padding:8px;border:1px solid var(--line);border-radius:6px;min-width:0}
+.annotation-group legend{padding:0 5px;font-weight:600;color:var(--muted)}
+.annotation-row{display:grid;grid-template-columns:20px minmax(0,1fr) minmax(65px,auto);gap:8px;align-items:center;margin-bottom:7px}
+.annotation-row:last-child{margin-bottom:0}
+.annotation-row>input[type="checkbox"]{width:17px;height:17px;accent-color:var(--accent);margin:0}
+.annotation-row .f input{font-family:var(--font-ui)}
+.annotation-value{text-align:right;font-family:var(--font-num);font-size:12px;white-space:nowrap;padding-top:14px}
+.annotation-preview{border:1px solid var(--line);background:var(--cv-bg);padding:12px;max-height:180px;overflow:auto}
+.annotation-preview h3{margin:0 0 6px;font-size:16px}
+.annotation-preview p{font-family:var(--font-num);font-size:13px;overflow-wrap:anywhere;margin:3px 0}
+.annotation-controls:disabled{opacity:.55}
+.annotation-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 @media (max-width:900px){
   .work{grid-template-columns:minmax(0,1fr);height:auto}
   .tools{flex-direction:row;overflow-x:auto;overflow-y:hidden}
@@ -190,6 +208,7 @@ table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--f
       <label><input type="checkbox" id="sRel"> Relativo a barras</label>
       <label><input type="checkbox" id="sLen"> Imán a longitudes base</label>
       <label><input type="checkbox" id="sShowLen"> Mostrar longitudes</label>
+      <label>Formato <select id="sFormat"><option value="exact">Raíces y fracciones</option><option value="decimal">Decimales</option></select></label>
     </div>
     <div class="canvas-wrap" id="wrap">
       <canvas id="cv" aria-label="Lienzo de dibujo"></canvas>
@@ -204,11 +223,12 @@ table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--f
       <button class="tab" role="tab" id="tabRes" aria-selected="false">Resultados</button>
     </div>
     <div class="pane" id="paneProps">
+      <div class="sec"><label class="f"><span>Nombre del ejercicio</span><input id="exerciseName" type="text" maxlength="100" data-notr></label></div>
       <div class="sec"><h3>Selección</h3><div id="inspector"></div></div>
       <div class="sec"><h3>Longitudes base</h3><p class="empty" style="margin-bottom:6px">Define una medida (por ejemplo L1 = 1 m). Las barras con esa referencia miden siempre lo mismo.</p><div class="glist" id="groups"></div><div class="btns" style="margin-top:8px"><button class="btn small" id="addGroup">+ Nueva longitud base</button></div></div>
       <div class="sec"><h3>Cables</h3><p class="empty" style="margin-bottom:6px">Marca una barra como cable para calcular su diámetro. Indica σadm, o bien fy y el coeficiente de seguridad n (σadm = fy / n).</p>
-        <div class="row"><label class="f"><span>σadm (MPa)</span><input id="cSigma" type="number" step="any" min="0" placeholder="p. ej. 150"></label><span></span>
-        <label class="f"><span>fy (MPa)</span><input id="cFy" type="number" step="any" min="0" placeholder="p. ej. 235"></label><label class="f"><span>n (seguridad)</span><input id="cN" type="number" step="any" min="0" placeholder="p. ej. 1,5"></label></div></div>
+        <div class="row"><label class="f"><span>σadm (MPa)</span><input id="cSigma" type="text" title="Admite 4raiz(2), √2 y 1/3." min="0" placeholder="p. ej. 150"></label><span></span>
+        <label class="f"><span>fy (MPa)</span><input id="cFy" type="text" title="Admite 4raiz(2), √2 y 1/3." min="0" placeholder="p. ej. 235"></label><label class="f"><span>n (seguridad)</span><input id="cN" type="text" title="Admite 4raiz(2), √2 y 1/3." min="0" placeholder="p. ej. 1,5"></label></div></div>
     </div>
     <div class="pane" id="paneRes" hidden><div id="resBox"><p class="empty">Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres.</p></div></div>
   </aside>
@@ -216,7 +236,7 @@ table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--f
 
 <section class="results" id="results" hidden>
   <h2>Diagramas de sólido libre</h2>
-  <p class="lead">Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. Las flechas parten del punto donde se aplica la fuerza. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.</p>
+  <p class="lead">Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. En los nudos, todas las flechas parten del nudo: en tracción apuntan hacia la barra y en compresión hacia el lado opuesto. En las barras aisladas, las fuerzas parten de sus extremos: hacia fuera es tracción y hacia dentro es compresión. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.</p>
   <h3 class="fbd-sub">Estructura completa</h3><div class="fbd-grid wide" id="fbdStruct"></div>
   <h3 class="fbd-sub">Nudos</h3><div class="fbd-grid" id="fbdNodes"></div>
   <h3 class="fbd-sub">Barras</h3><div class="fbd-grid" id="fbdBars"></div>
@@ -227,6 +247,26 @@ table.res td{padding:4px;border-bottom:1px solid var(--line);font-family:var(--f
 <script>
 /* Diccionario: clave en castellano -> [catalán, inglés]. Se aplica por fragmentos, de la clave más larga a la más corta. */
 var I18N_DICT = [
+  ['Acotaciones de la exportación', "Acotacions de l’exportació", 'Export annotations'],
+  ['Elige los datos del recuadro inferior derecho. Puedes editar sus etiquetas solo para la exportación.', 'Tria les dades del requadre inferior dret. Pots editar-ne les etiquetes només per a l’exportació.', 'Choose the data for the bottom-right box. Labels can be edited just for the export.'],
+  ['Añadir recuadro de datos', 'Afegeix un requadre de dades', 'Include data box'],
+  ['Agrupar valores iguales', 'Agrupa els valors iguals', 'Group equal values'],
+  ['Seleccionar todos', 'Selecciona-ho tot', 'Select all'], ['Quitar selección', 'Treu la selecció', 'Clear selection'],
+  ['Etiqueta en la exportación', 'Etiqueta a l’exportació', 'Export label'],
+  ['Incluir este dato', 'Inclou aquesta dada', 'Include this value'],
+  ['Vista previa del recuadro', 'Vista prèvia del requadre', 'Data box preview'],
+  ['Datos', 'Dades', 'Data'], ['Masas', 'Masses', 'Masses'],
+  ['Cotas', 'Cotes', 'Dimensions'], ['Ángulos', 'Angles', 'Angles'], ['Fuerzas', 'Forces', 'Forces'],
+  ['No se añadirá ningún recuadro.', 'No s’hi afegirà cap requadre.', 'No data box will be added.'],
+  ['Exportar PNG', 'Exporta PNG', 'Export PNG'], ['Exportar sin recuadro', 'Exporta sense requadre', 'Export without data box'],
+  ['Preparando imagen…', 'Preparant la imatge…', 'Preparing image…'],
+  ['No se ha podido preparar la imagen. Vuelve a intentarlo.', 'No s’ha pogut preparar la imatge. Torna-ho a provar.', 'Could not prepare the image. Please try again.'],
+  ['Formato', 'Format', 'Format'], ['Raíces y fracciones', 'Arrels i fraccions', 'Roots and fractions'], ['Decimales', 'Decimals', 'Decimals'],
+  ['Nombre del ejercicio', "Nom de l’exercici", 'Exercise name'], ['Nombre personalizado', 'Nom personalitzat', 'Custom name'],
+  ['Nombre del apoyo', 'Nom del suport', 'Support name'], ['Vacío: usar el identificador original.', 'Buit: utilitza l’identificador original.', 'Blank: use the original identifier.'],
+  ['Admite 4raiz(2), √2 y 1/3.', 'Admet 4raiz(2), √2 i 1/3.', 'Accepts 4sqrt(2), √2 and 1/3.'],
+  ['Raíces y fracciones reconocidas con tolerancia numérica; ≈ indica un valor aproximado.', 'Arrels i fraccions reconegudes amb tolerància numèrica; ≈ indica un valor aproximat.', 'Roots and fractions recognized within numerical tolerance; ≈ indicates an approximate value.'],
+  ['Introduce un número o una expresión válida, como 4raiz(2) o 1/3.', 'Introdueix un nombre o una expressió vàlida, com 4raiz(2) o 1/3.', 'Enter a number or a valid expression, such as 4sqrt(2) or 1/3.'],
   /* ---- Cabecera y barras ---- */
   ['Taller de Estática', "Taller d'Estàtica", 'Statics Workshop'],
   ['Barras, nudos, fuerzas y sólidos libres', 'Barres, nusos, forces i sòlids lliures', 'Bars, joints, forces and free-body diagrams'],
@@ -258,7 +298,7 @@ var I18N_DICT = [
   ['Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres. Si falta algún dato, el programa te dirá cuál.', 'Prem «Calcula» per obtenir reaccions, esforços en barres i els sòlids lliures. Si falta alguna dada, el programa t\'ho dirà.', 'Press “Calculate” to get reactions, bar forces and the free-body diagrams. If any data is missing, the program will tell you which.'],
   ['Pulsa «Calcular» para obtener reacciones, esfuerzos en barras y los sólidos libres.', 'Prem «Calcula» per obtenir reaccions, esforços en barres i els sòlids lliures.', 'Press “Calculate” to get reactions, bar forces and the free-body diagrams.'],
   ['Diagramas de sólido libre', 'Diagrames de sòlid lliure', 'Free-body diagrams'],
-  ['Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. Las flechas parten del punto donde se aplica la fuerza. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.', 'Cada nus i cada barra s\'aïlla amb les forces que hi actuen. Les fletxes surten del punt on s\'aplica la força. Blau: tracció. Vermell: compressió. Taronja: càrregues. Verd: reaccions.', 'Each joint and each bar is isolated with the forces acting on it. Arrows start at the point where the force is applied. Blue: tension. Red: compression. Orange: loads. Green: reactions.'],
+  ['Cada nudo y cada barra se aísla con las fuerzas que actúan sobre él. En los nudos, todas las flechas parten del nudo: en tracción apuntan hacia la barra y en compresión hacia el lado opuesto. En las barras aisladas, las fuerzas parten de sus extremos: hacia fuera es tracción y hacia dentro es compresión. Azul: tracción. Rojo: compresión. Naranja: cargas. Verde: reacciones.', 'Cada nus i cada barra s\'aïlla amb les forces que hi actuen. Als nusos, totes les fletxes parteixen del nus: en tracció apunten cap a la barra i en compressió cap al costat oposat. A les barres aïllades, les forces parteixen dels extrems: cap enfora és tracció i cap endins és compressió. Blau: tracció. Vermell: compressió. Taronja: càrregues. Verd: reaccions.', 'Each joint and each bar is isolated with the forces acting on it. All joint arrows start at the joint: tension points towards the member and compression towards the opposite side. On isolated members, forces start at the ends: outwards means tension and inwards means compression. Blue: tension. Red: compression. Orange: loads. Green: reactions.'],
   ['Estructura completa', 'Estructura completa', 'Whole structure'],
   ['Nudos', 'Nusos', 'Joints'], ['Barras', 'Barres', 'Bars'],
 
@@ -406,6 +446,10 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
   var EPS = 1e-9;
 
   function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+
+  function displayName(item) { return item ? (typeof item.name === 'string' && item.name.trim() ? item.name.trim() : item.id) : ''; }
+  function nodeName(m, id) { return displayName(byId(m.nodes, id)) || id; }
+  function reactionName(n) { return n.supportName || 'R(' + displayName(n) + ')'; }
 
   /* ---------- Geometría ---------- */
   function barLength(m, bar) {
@@ -573,9 +617,9 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
     });
 
     var degenerate = m.bars.filter(function (b) { return barLength(m, b) < 1e-6; });
-    if (degenerate.length) res.warnings.push('Barra de longitud cero: ' + degenerate.map(function (b) { return b.id; }).join(', ') + '.');
+    if (degenerate.length) res.warnings.push('Barra de longitud cero: ' + degenerate.map(function (b) { return displayName(b); }).join(', ') + '.');
     var isolated = m.nodes.filter(function (nd) { return barsAt(m, nd.id).length === 0; });
-    if (isolated.length) res.warnings.push('Nudos sin barras: ' + isolated.map(function (x) { return x.id; }).join(', ') + '.');
+    if (isolated.length) res.warnings.push('Nudos sin barras: ' + isolated.map(function (x) { return displayName(x); }).join(', ') + '.');
 
     var R = rref(M, rows, cols);
     res.rank = R.rank; res.rows = rows; res.cols = cols;
@@ -633,12 +677,88 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
     });
     (m.bars || []).forEach(function (b) {
       if (b.cable && res.barForce[b.id].known && res.barForce[b.id].value < -1e-7)
-        res.warnings.push('El cable ' + b.id + ' está a compresión (' + fmt(res.barForce[b.id].value) + ' kN): no puede trabajar así.');
+        res.warnings.push('El cable ' + displayName(b) + ' está a compresión (' + fmt(res.barForce[b.id].value) + ' kN): no puede trabajar así.');
     });
     return res;
   }
 
-  function fmt(v, d) { d = d == null ? 3 : d; var a = Math.abs(v) < Math.pow(10, -d) / 2 ? 0 : v; return a.toFixed(d).replace(/\.?0+$/, ''); }
+  // The numerical solver is unchanged. Only simple, tightly matching forms are recognized.
+  var exactNumbers = true, numberCache = new Map();
+  function setNumberFormat(mode) { exactNumbers = mode !== 'decimal'; }
+  // Suppress binary floating-point tails in editable values, without rounding the model.
+  // Preserve typed expressions and meaningful small values; do not use fixed decimal places.
+  function editNumber(value) {
+    if (value == null || value === '') return '';
+    var text = String(value), numeric = typeof value === 'number' ? value :
+      (/^[+-]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:e[+-]?\d+)?$/i.test(text.trim()) ? Number(text.replace(',', '.')) : null);
+    if (numeric === null) return text;
+    if (!Number.isFinite(numeric)) return '';
+    return String(Number(numeric.toPrecision(15)));
+  }
+  function decimal(v, d) {
+    var a = Math.abs(v) < Math.pow(10, -d) / 2 ? 0 : v;
+    var text = a.toFixed(d); return d ? text.replace(/\.?0+$/, '') : text;
+  }
+  function exactParts(v) {
+    if (!Number.isFinite(v)) return null;
+    if (numberCache.has(v)) return numberCache.get(v);
+    var x = Math.abs(v), tol = Math.min(1e-9, 2e-12 * Math.max(1, x)), best = null, score = Infinity;
+    if (x < 1e-10) return { p: 0, q: 1, r: 1 };
+    if (x > 1e8) return null;
+    for (var r = 1; r <= 200; r++) {
+      var squarefree = true;
+      for (var f = 2; f * f <= r; f++) if (r % (f * f) === 0) { squarefree = false; break; }
+      if (!squarefree) continue;
+      var root = Math.sqrt(r), maxQ = r === 1 ? 100 : 24;
+      for (var q = 1; q <= maxQ; q++) {
+        var p = Math.round(x * q / root);
+        if (!p || p > 100000 || Math.abs(p * root / q - x) > tol) continue;
+        var cost = String(p).length + (q > 1 ? String(q).length + 2 : 0) + (r > 1 ? String(r).length + 2 : 0);
+        if (cost < score) { best = { p: v < 0 ? -p : p, q: q, r: r }; score = cost; }
+      }
+    }
+    if (numberCache.size > 1024) numberCache.clear();
+    numberCache.set(v, best); return best;
+  }
+  function fmt(v, d) {
+    d = d == null ? 3 : d;
+    if (!Number.isFinite(v)) return '?';
+    if (!exactNumbers) return decimal(v, d);
+    var e = exactParts(v);
+    if (!e) return '≈' + decimal(v, d);
+    var a = Math.abs(e.p), text = e.r === 1 ? String(a) : (a === 1 ? '' : a) + '√' + e.r;
+    return (e.p < 0 ? '−' : '') + text + (e.q === 1 ? '' : '/' + e.q);
+  }
+  // Small arithmetic parser; no eval, arbitrary code or partial-number parsing.
+  function parseNumber(value) {
+    var source = String(value).trim().toLowerCase().replace(/,/g, '.').replace(/−/g, '-').replace(/×|·/g, '*').replace(/÷/g, '/').replace(/ra[ií]z|sqrt/g, '√');
+    if (!source || source.length > 160) return null;
+    var tokens = source.match(/(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?|[√π()+\-*/^]/g);
+    if (!tokens || tokens.join('') !== source.replace(/\s+/g, '')) return null;
+    var i = 0;
+    function atom() {
+      var t = tokens[i++];
+      if (t === '(') { var x = sum(); if (tokens[i++] !== ')') throw 0; return x; }
+      if (t === '√') { var r = atom(); if (r < 0) throw 0; return Math.sqrt(r); }
+      if (t === 'π') return Math.PI;
+      if (!t || !/^(?:\d|\.)/.test(t)) throw 0;
+      return Number(t);
+    }
+    function power() { var x = atom(); if (tokens[i] === '^') { i++; x = Math.pow(x, unary()); } return x; }
+    function unary() { if (tokens[i] === '+') { i++; return unary(); } if (tokens[i] === '-') { i++; return -unary(); } return power(); }
+    function product() {
+      var x = unary();
+      while (i < tokens.length) {
+        var t = tokens[i];
+        if (t === '*' || t === '/') { i++; var y = unary(); if (t === '/' && y === 0) throw 0; x = t === '*' ? x * y : x / y; }
+        else if (t === '(' || t === '√' || t === 'π') x *= unary();
+        else break;
+      }
+      return x;
+    }
+    function sum() { var x = product(); while (tokens[i] === '+' || tokens[i] === '-') { var op = tokens[i++], y = product(); x = op === '+' ? x + y : x - y; } return x; }
+    try { var result = sum(); return i === tokens.length && Number.isFinite(result) ? result : null; } catch (e) { return null; }
+  }
 
   /* ---------- Preguntas del problema ---------- */
   // q: {type, bar?, node?, sigma?, fy?, safety?}
@@ -666,22 +786,22 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
     var b = q.bar ? byId(m.bars, q.bar) : null;
     function barText(bar) {
       var f = res.barForce[bar.id];
-      if (!f.known) return 'esfuerzo en ' + bar.id + ': no determinable (estructura hiperestática)';
+      if (!f.known) return 'esfuerzo en ' + displayName(bar) + ': no determinable (estructura hiperestática)';
       var v = f.value;
-      if (Math.abs(v) < 1e-7) return bar.id + ': 0 kN (barra de fuerza nula)';
-      return bar.id + ': ' + fmt(Math.abs(v)) + ' kN a ' + (v > 0 ? 'TRACCIÓN' : 'COMPRESIÓN');
+      if (Math.abs(v) < 1e-7) return displayName(bar) + ': 0 kN (barra de fuerza nula)';
+      return displayName(bar) + ': ' + fmt(Math.abs(v)) + ' kN a ' + (v > 0 ? 'TRACCIÓN' : 'COMPRESIÓN');
     }
     switch (q.type) {
       case 'force_bar': if (b) out.lines.push('Fuerza en la barra ' + barText(b)); break;
       case 'bar_type': if (b) {
         var f = res.barForce[b.id];
-        out.lines.push(!f.known ? 'No determinable.' : Math.abs(f.value) < 1e-7 ? 'La barra ' + b.id + ' no trabaja (fuerza nula).' :
-          'La barra ' + b.id + ' trabaja a ' + (f.value > 0 ? 'tracción (tira de sus nudos)' : 'compresión (empuja a sus nudos)') + '.');
+        out.lines.push(!f.known ? 'No determinable.' : Math.abs(f.value) < 1e-7 ? 'La barra ' + displayName(b) + ' no trabaja (fuerza nula).' :
+          'La barra ' + displayName(b) + ' trabaja a ' + (f.value > 0 ? 'tracción (tira de sus nudos)' : 'compresión (empuja a sus nudos)') + '.');
       } break;
       case 'reaction': {
         var r = res.reactions[q.node];
-        if (r) out.lines.push(!r.known ? 'Reacción en ' + q.node + ': no determinable.' :
-          'Reacción en ' + q.node + ': Rx = ' + fmt(r.fx) + ' kN, Ry = ' + fmt(r.fy) + ' kN, |R| = ' + fmt(Math.hypot(r.fx, r.fy)) + ' kN, ángulo ' + fmt(((Math.atan2(r.fy, r.fx) / D2R) + 360) % 360, 1) + '°');
+        if (r) out.lines.push(!r.known ? 'Reacción en ' + nodeName(m, q.node) + ': no determinable.' :
+          'Reacción en ' + nodeName(m, q.node) + ': Rx = ' + fmt(r.fx) + ' kN, Ry = ' + fmt(r.fy) + ' kN, |R| = ' + fmt(Math.hypot(r.fx, r.fy)) + ' kN, ángulo ' + fmt(((Math.atan2(r.fy, r.fx) / D2R) + 360) % 360, 1) + '°');
       } break;
       case 'all_bars': m.bars.forEach(function (bar) { out.lines.push(barText(bar)); }); break;
       case 'max_bar': {
@@ -692,11 +812,11 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
       case 'cable_diameter':
       case 'bar_area': if (b) {
         var fb = res.barForce[b.id];
-        if (!fb.known) { out.lines.push('El esfuerzo en ' + b.id + ' no es determinable.'); break; }
+        if (!fb.known) { out.lines.push('El esfuerzo en ' + displayName(b) + ' no es determinable.'); break; }
         var sig = q.sigma > 0 ? q.sigma : q.fy / q.safety;
         var F = Math.abs(fb.value) * 1000;                    // N
         var A = F / sig;                                       // mm²
-        out.lines.push('Esfuerzo en ' + b.id + ': ' + fmt(Math.abs(fb.value)) + ' kN (' + (fb.value > 0 ? 'tracción' : fb.value < -1e-7 ? 'compresión' : 'nulo') + ')');
+        out.lines.push('Esfuerzo en ' + displayName(b) + ': ' + fmt(Math.abs(fb.value)) + ' kN (' + (fb.value > 0 ? 'tracción' : fb.value < -1e-7 ? 'compresión' : 'nulo') + ')');
         out.lines.push('σadm = ' + fmt(sig, 2) + ' MPa' + (q.sigma > 0 ? '' : '  (= fy / n = ' + fmt(q.fy, 1) + ' / ' + fmt(q.safety, 2) + ')'));
         out.lines.push('Área necesaria A = F / σadm = ' + fmt(A, 2) + ' mm²');
         var d = Math.sqrt(4 * A / Math.PI);
@@ -710,7 +830,7 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
   }
 
   var API = {
-    analyze: analyze, answer: answer, checkMissing: checkMissing, fmt: fmt,
+    analyze: analyze, answer: answer, checkMissing: checkMissing, fmt: fmt, editNumber: editNumber, exactParts: exactParts, setNumberFormat: setNumberFormat, parseNumber: parseNumber, displayName: displayName, nodeName: nodeName, reactionName: reactionName,
     barLength: barLength, barAngle: barAngle, setBarLength: setBarLength, setBarAngle: setBarAngle,
     relaxGroups: relaxGroups, setLengthSmart: setLengthSmart, linkEqual: linkEqual, unlink: unlink, barsAt: barsAt, angleBetween: angleBetween,
     loadVec: loadVec, supportUnknowns: supportUnknowns, byId: byId
@@ -722,7 +842,10 @@ var I18N_EXACT = ['Nudo','Barra','Fuerza','Nudos','Barras','Nuevo','Abrir','Calc
 <script>
 (function () {
 'use strict';
-var E = window.Estatica, byId = E.byId, fmt = E.fmt;
+var E = window.Estatica, byId = E.byId, fmt = E.fmt, nameOf = E.displayName;
+function nodeName(m, id) { return E.nodeName(m, id); }
+function barName(m, id) { return nameOf(byId(m.bars, id)) || id; }
+function reactionName(n) { return E.reactionName(n); }
 var D2R = Math.PI / 180;
 var $ = function (id) { return document.getElementById(id); };
 var FONT_UI = '"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif';
@@ -739,8 +862,20 @@ function setLangData(l) {
 }
 function tr(s) {
   if (LANG === 'es' || !s) return s;
-  var c = TCACHE[s]; if (c !== undefined) return c;
-  var o = s.replace(LRE, function (m) { return LMAP[m]; }); TCACHE[s] = o; return o;
+  var protectedText = [], names = [];
+  if (M) {
+    [M.nodes, M.bars, M.loads, M.dims, M.angs].forEach(function (list) { (list || []).forEach(function (item) { if (item.name) names.push(item.name); if (item.supportName) names.push(item.supportName); }); });
+    Object.keys(M.groups || {}).forEach(function (g) { names.push(g); });
+    if (M.q.title) names.push(M.q.title);
+  }
+  names = names.concat(names.map(esc)).filter(function (n, i, a) { return n && a.indexOf(n) === i; }).sort(function (a, b) { return b.length - a.length; });
+  var text = s;
+  names.forEach(function (n) {
+    var token = '\uE000' + (protectedText.push(n) - 1) + '\uE001';
+    var escaped = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    text = text.replace(new RegExp('(^|[^\\p{L}\\p{N}_])' + escaped + '(?=$|[^\\p{L}\\p{N}_])', 'gu'), function (_, before) { return before + token; });
+  });
+  return text.replace(LRE, function (m) { return LMAP[m]; }).replace(/\uE000(\d+)\uE001/g, function (_, i) { return protectedText[i]; });
 }
 function trx(s) { if (LANG === 'es') return s; var v = LEXACT[s]; return v !== undefined ? v : tr(s); }
 function tf(key, args) { var o = LANG === 'es' ? key : (LEXACT[key] || key); return o.replace(/\{(\d)\}/g, function (m, i) { return args[i]; }); }
@@ -750,7 +885,7 @@ var LOADLEN = 66;
 function freshModel() {
   return {
     nodes: [], bars: [], loads: [], groups: {}, dims: [], angs: [],
-    cfg: { grid: 0.5, snapGrid: true, snapAng: 15, relAng: true, snapLen: true, autoGroup: true, showLen: false },
+    cfg: { grid: 0.5, snapGrid: true, snapAng: 15, relAng: true, snapLen: true, autoGroup: true, showLen: false, numberFormat: 'exact', exportAnnotations: { enabled: true, groupEqual: true, selected: null, labels: {} } },
     q: { title: '', type: 'force_bar', bar: '', node: '', sigma: '', fy: '', safety: '' }
   };
 }
@@ -788,14 +923,32 @@ var EXPORT_PAL = { bg: '#ffffff', grid: '#e5e7eb', gridMajor: '#cbd5e1', ink: '#
 /* ============ Utilidades de dibujo ============ */
 function sx(v, x) { return v.ox + x * v.s; }
 function sy(v, y) { return v.oy - y * v.s; }
+function drawMathText(ctx, text, x, y) {
+  text = String(text); ctx.fillText(text, x, y);
+  if (text.indexOf('√') < 0) return;
+  var width = ctx.measureText(text).width, align = ctx.textAlign;
+  var left = x - (align === 'center' ? width / 2 : align === 'right' || align === 'end' ? width : 0);
+  var size = parseFloat((ctx.font.match(/([\d.]+)px/) || [0, 12])[1]);
+  var top = y - (ctx.textBaseline === 'middle' ? size * .47 : ctx.textBaseline === 'top' ? 0 : size * .8);
+  var re = /√(\d+)/g, match;
+  ctx.save(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = Math.max(.7, size / 16);
+  while ((match = re.exec(text))) {
+    var x1 = left + ctx.measureText(text.slice(0, match.index + 1)).width;
+    ctx.beginPath(); ctx.moveTo(x1 - 1, top); ctx.lineTo(x1 + ctx.measureText(match[1]).width, top); ctx.stroke();
+  }
+  ctx.restore();
+}
 function label(ctx, txt, x, y, pal, o) {
   o = o || {}; txt = tr(txt);
   var size = o.size || 12;
   ctx.font = (o.weight || '500') + ' ' + size + 'px ' + (o.font || FONT_NUM);
-  var w = ctx.measureText(txt).width;
+  var maxW = o.maxWidth || 240, w = ctx.measureText(txt).width;
+  if (w > maxW) { size = Math.max(10, size * maxW / w); ctx.font = (o.weight || '500') + ' ' + size + 'px ' + (o.font || FONT_NUM); }
+  var lines = wrapText(ctx, txt, maxW), lineH = size * 1.2;
+  w = Math.max.apply(null, lines.map(function (line) { return ctx.measureText(line).width; }));
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (o.bg !== false) { ctx.globalAlpha = 0.88; ctx.fillStyle = pal.bg; ctx.fillRect(x - w / 2 - 3, y - size / 2 - 2, w + 6, size + 4); ctx.globalAlpha = 1; }
-  ctx.fillStyle = o.color || pal.ink; ctx.fillText(txt, x, y);
+  if (o.bg !== false) { ctx.globalAlpha = 0.88; ctx.fillStyle = pal.bg; ctx.fillRect(x - w / 2 - 3, y - size / 2 - 2, w + 6, lineH * lines.length + 4); ctx.globalAlpha = 1; }
+  ctx.fillStyle = o.color || pal.ink; lines.forEach(function (line, i) { drawMathText(ctx, line, x, y + i * lineH); });
 }
 function arrow(ctx, x1, y1, x2, y2, color, lw, head) {
   lw = lw || 2.5; head = head || 9;
@@ -812,6 +965,10 @@ function wrapText(ctx, text, maxW) {
   String(text).split('\n').forEach(function (par) {
     var words = par.split(/\s+/), line = '';
     words.forEach(function (w) {
+      while (ctx.measureText(w).width > maxW && w.length > 1) {
+        var cut = 1; while (cut < w.length && ctx.measureText(w.slice(0, cut + 1)).width <= maxW) cut++;
+        if (line) { out.push(line); line = ''; } out.push(w.slice(0, cut)); w = w.slice(cut);
+      }
       var t = line ? line + ' ' + w : w;
       if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
     });
@@ -902,9 +1059,9 @@ function drawSupport(ctx, n, v, pal) {
   ctx.restore();
 }
 function loadText(l) {
-  if (l.showVal === false) return l.id;
-  if (l.F == null) return l.id + ' = ? kN';
-  return l.kind === 'peso' ? l.id + ' ' + fmt(l.mass, 1) + ' kg = ' + fmt(l.F, 2) + ' kN' : l.id + ' ' + fmt(l.F, 2) + ' kN';
+  if (l.showVal === false) return nameOf(l);
+  if (l.F == null) return nameOf(l) + ' = ? kN';
+  return l.kind === 'peso' ? nameOf(l) + ' ' + fmt(l.mass, 1) + ' kg = ' + fmt(l.F, 2) + ' kN' : nameOf(l) + ' ' + fmt(l.F, 2) + ' kN';
 }
 function drawLoad(ctx, m, v, pal, l, o) {
   var g = loadGeom(l, m, v);
@@ -919,9 +1076,9 @@ function drawReactions(ctx, m, v, pal, res) {
   m.nodes.forEach(function (n) {
     var r = res.reactions[n.id]; if (!r) return;
     var x = sx(v, n.x), y = sy(v, n.y), L = 58;
-    if (!r.known) { label(ctx, 'R' + n.id + ' = ?', x, y + 38, pal, { color: pal.muted }); return; }
-    var comps = n.support === 'roller' ? [{ fx: r.fx, fy: r.fy, t: 'R' + n.id, v: Math.hypot(r.fx, r.fy) }]
-      : [{ fx: r.fx, fy: 0, t: 'R' + n.id + 'x', v: r.fx }, { fx: 0, fy: r.fy, t: 'R' + n.id + 'y', v: r.fy }];
+    if (!r.known) { label(ctx, reactionName(n) + ' = ?', x, y + 38, pal, { color: pal.muted }); return; }
+    var comps = n.support === 'roller' ? [{ fx: r.fx, fy: r.fy, t: reactionName(n), v: Math.hypot(r.fx, r.fy) }]
+      : [{ fx: r.fx, fy: 0, t: reactionName(n) + 'x', v: r.fx }, { fx: 0, fy: r.fy, t: reactionName(n) + 'y', v: r.fy }];
     comps.forEach(function (c) {
       var mag = Math.hypot(c.fx, c.fy); if (mag < 1e-7) return;
       var ux = c.fx / mag, uy = -c.fy / mag;
@@ -945,7 +1102,7 @@ function drawDim(ctx, m, v, pal, d, o) {
     var p = e[0], s = e[1]; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + s * (ux * 9 - uy * 3.5), p.y + s * (uy * 9 + ux * 3.5)); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + s * (ux * 9 + uy * 3.5), p.y + s * (uy * 9 - ux * 3.5)); ctx.stroke();
   });
   ctx.translate(g.mid.x, g.mid.y); var ang = g.ang; if (Math.abs(ang) > Math.PI / 2) ang += Math.PI; ctx.rotate(ang);
-  label(ctx, fmt(g.L, 3) + ' m', 0, -9, pal, { color: pal.dim, weight: '600' });
+  label(ctx, (d.name ? d.name + ' = ' : '') + fmt(g.L, 3) + ' m', 0, -9, pal, { color: pal.dim, weight: '600' });
   ctx.restore();
 }
 function drawAng(ctx, m, v, pal, an, o) {
@@ -954,11 +1111,11 @@ function drawAng(ctx, m, v, pal, an, o) {
   if (isSel(o, 'ang', an.id) || (o.hover && o.hover.type === 'ang' && o.hover.id === an.id)) { ctx.strokeStyle = pal.sel; ctx.lineWidth = 2.6; }
   if (!an.b2) { ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(g.cx, g.cy); ctx.lineTo(g.cx + g.r + 14, g.cy); ctx.stroke(); ctx.setLineDash([]); }
   ctx.beginPath(); ctx.arc(g.cx, g.cy, g.r, -g.t1, -(g.t1 + g.d), g.d > 0); ctx.stroke();
-  label(ctx, fmt(g.deg, 1) + '°', g.lx, g.ly, pal, { color: pal.dim, weight: '600' });
+  label(ctx, (an.name ? an.name + ' = ' : '') + fmt(g.deg, 1) + '°', g.lx, g.ly, pal, { color: pal.dim, weight: '600' });
   ctx.restore();
 }
 function barLabel(m, b, o) {
-  var parts = [b.id], f = o.res && o.res.barForce[b.id];
+  var parts = [nameOf(b)], f = o.res && o.res.barForce[b.id];
   if (m.cfg.showLen || o.showLen) parts.push((b.group ? b.group + '=' : '') + fmt(E.barLength(m, b), 3) + ' m');
   if (f && !o.fbd) { if (!f.known) parts.push('?'); else if (Math.abs(f.value) < 1e-7) parts.push('0 kN'); else parts.push(fmt(Math.abs(f.value), 2) + ' kN ' + (f.value > 0 ? 'T' : 'C')); }
   return parts.join(' · ');
@@ -970,7 +1127,7 @@ function drawModel(ctx, m, v, pal, o) {
   if (o.grid) drawGrid(ctx, m, v, pal, W, H);
   m.dims.forEach(function (d) { drawDim(ctx, m, v, pal, d, o); });
   m.bars.forEach(function (b) { drawBar(ctx, m, v, pal, b, o); });
-  if (!o.fbd) m.nodes.forEach(function (n) { if (n.support) drawSupport(ctx, n, v, pal); });
+  if (!o.fbd) m.nodes.forEach(function (n) { if (n.support) { drawSupport(ctx, n, v, pal); if (n.supportName) label(ctx, n.supportName, sx(v, n.x), sy(v, n.y) + 52, pal, { size: 11 }); } });
   m.loads.forEach(function (l) { drawLoad(ctx, m, v, pal, l, o); });
   if (o.res && (o.res.status === 'isostatica' || o.res.status === 'hiperestatica')) drawReactions(ctx, m, v, pal, o.res);
   m.angs.forEach(function (a) { drawAng(ctx, m, v, pal, a, o); });
@@ -990,7 +1147,7 @@ function drawModel(ctx, m, v, pal, o) {
     if (isSel(o, 'node', n.id) || (o.hover && o.hover.type === 'node' && o.hover.id === n.id)) { ctx.fillStyle = pal.sel; ctx.globalAlpha = isSel(o, 'node', n.id) ? 0.6 : 0.35; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill(); ctx.stroke();
     ctx.restore();
-    label(ctx, n.id, x - 13, y - 14, pal, { weight: '700', size: 14, font: FONT_UI, bg: false });
+    label(ctx, nameOf(n), x - 13, y - 14, pal, { weight: '700', size: 14, font: FONT_UI, bg: false });
   });
   // etiquetas de barras
   m.bars.forEach(function (b) {
@@ -1020,69 +1177,88 @@ function nodeForces(m, res, nid) {
   E.barsAt(m, nid).forEach(function (b) {
     var o = otherEnd(m, b, nid), dx = o.x - n.x, dy = o.y - n.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
     var f = res.barForce[b.id];
-    if (!f.known) out.push({ kind: 'bar', t: b.id + ' = ?', ux: ux, uy: uy, mag: 1, unknown: true });
+    if (!f.known) out.push({ kind: 'bar', t: nameOf(b) + ' = ?', ux: ux, uy: uy, mag: 1, unknown: true });
     else if (Math.abs(f.value) >= 1e-7) {
       var sgn = f.value > 0 ? 1 : -1;
-      out.push({ kind: 'bar', t: b.id + ' = ' + fmt(Math.abs(f.value), 2) + ' kN (' + (f.value > 0 ? 'T' : 'C') + ')', ux: ux * sgn, uy: uy * sgn, mag: Math.abs(f.value), fx: f.value * ux, fy: f.value * uy, tens: f.value > 0 });
+      out.push({ kind: 'bar', t: nameOf(b) + ' = ' + fmt(Math.abs(f.value), 2) + ' kN (' + (f.value > 0 ? 'T' : 'C') + ')', ux: ux * sgn, uy: uy * sgn, mag: Math.abs(f.value), fx: f.value * ux, fy: f.value * uy, tens: f.value > 0 });
     }
   });
   m.loads.filter(function (l) { return l.node === nid && l.F; }).forEach(function (l) {
     var c = Math.cos(l.ang * D2R), s = Math.sin(l.ang * D2R);
-    out.push({ kind: 'load', t: l.id + ' = ' + fmt(l.F, 2) + ' kN', ux: c, uy: s, mag: Math.abs(l.F), fx: l.F * c, fy: l.F * s });
+    out.push({ kind: 'load', t: nameOf(l) + ' = ' + fmt(l.F, 2) + ' kN', ux: c, uy: s, mag: Math.abs(l.F), fx: l.F * c, fy: l.F * s });
   });
   var r = res.reactions[nid];
   if (r) {
-    if (!r.known) out.push({ kind: 'react', t: 'R' + nid + ' = ?', ux: 0, uy: 1, mag: 1, unknown: true });
-    else if (n.support === 'roller') { var mg = Math.hypot(r.fx, r.fy); if (mg > 1e-7) out.push({ kind: 'react', t: 'R' + nid + ' = ' + fmt(mg, 2) + ' kN', ux: r.fx / mg, uy: r.fy / mg, mag: mg, fx: r.fx, fy: r.fy }); }
+    if (!r.known) out.push({ kind: 'react', t: reactionName(n) + ' = ?', ux: 0, uy: 1, mag: 1, unknown: true });
+    else if (n.support === 'roller') { var mg = Math.hypot(r.fx, r.fy); if (mg > 1e-7) out.push({ kind: 'react', t: reactionName(n) + ' = ' + fmt(mg, 2) + ' kN', ux: r.fx / mg, uy: r.fy / mg, mag: mg, fx: r.fx, fy: r.fy }); }
     else {
-      if (Math.abs(r.fx) > 1e-7) out.push({ kind: 'react', t: 'R' + nid + 'x = ' + fmt(Math.abs(r.fx), 2) + ' kN', ux: Math.sign(r.fx), uy: 0, mag: Math.abs(r.fx), fx: r.fx, fy: 0 });
-      if (Math.abs(r.fy) > 1e-7) out.push({ kind: 'react', t: 'R' + nid + 'y = ' + fmt(Math.abs(r.fy), 2) + ' kN', ux: 0, uy: Math.sign(r.fy), mag: Math.abs(r.fy), fx: 0, fy: r.fy });
+      if (Math.abs(r.fx) > 1e-7) out.push({ kind: 'react', t: reactionName(n) + 'x = ' + fmt(Math.abs(r.fx), 2) + ' kN', ux: Math.sign(r.fx), uy: 0, mag: Math.abs(r.fx), fx: r.fx, fy: 0 });
+      if (Math.abs(r.fy) > 1e-7) out.push({ kind: 'react', t: reactionName(n) + 'y = ' + fmt(Math.abs(r.fy), 2) + ' kN', ux: 0, uy: Math.sign(r.fy), mag: Math.abs(r.fy), fx: 0, fy: r.fy });
     }
   }
   return out;
 }
 function frame(ctx, W, H, pal, title) {
   ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, W, H);
-  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(tr(title), 10, 8);
+  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; var text = tr(title);
+  if (ctx.measureText(text).width > W - 20) ctx.font = '700 12px ' + FONT_UI;
+  wrapText(ctx, text, W - 20).forEach(function (line, i) { drawMathText(ctx, line, 10, 8 + i * 14); });
+}
+// Every force starts at the joint and follows its actual force vector.
+// Compression is translated through the joint to the opposite side, never reversed.
+function nodeArrowGeom(force, cx, cy, length) {
+  var dx = force.ux, dy = -force.uy;
+  var farX = cx + dx * length, farY = cy + dy * length;
+  return { x1: cx, y1: cy, x2: farX, y2: farY,
+    labelX: farX + dx * 6, labelY: farY + dy * 6, dx: dx, dy: dy };
 }
 function drawNodeFBD(ctx, W, H, m, res, nid, pal) {
-  frame(ctx, W, H, pal, 'Nudo ' + nid);
+  frame(ctx, W, H, pal, 'Nudo ' + nodeName(m, nid));
   var cx = W / 2, cy = H / 2 + 6, forces = nodeForces(m, res, nid), fmax = 0;
   forces.forEach(function (f) { if (!f.unknown) fmax = Math.max(fmax, f.mag); });
   var maxL = Math.min(W, H) / 2 - 40;
   forces.forEach(function (f) {
     var L = f.unknown ? maxL * 0.6 : 34 + (maxL - 34) * (fmax ? f.mag / fmax : 1);
-    var x2 = cx + f.ux * L, y2 = cy - f.uy * L, col = f.unknown ? pal.muted : f.kind === 'bar' ? (f.tens ? pal.tension : pal.compress) : f.kind === 'load' ? pal.load : pal.react;
-    ctx.save(); if (f.unknown) ctx.setLineDash([5, 4]); arrow(ctx, cx + f.ux * 8, cy - f.uy * 8, x2, y2, col, 2.6, 10); ctx.restore();
-    var lx = x2 + f.ux * 6, ly = y2 - f.uy * 6, w;
-    ctx.font = '600 11px ' + FONT_NUM; w = ctx.measureText(tr(f.t)).width;
-    lx = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, lx + f.ux * w / 2)); ly = Math.max(30, Math.min(H - 26, ly - f.uy * 6));
-    label(ctx, f.t, lx, ly, pal, { color: col, weight: '600', size: 11 });
+    var geometry = nodeArrowGeom(f, cx, cy, L), col = f.unknown ? pal.muted : f.kind === 'bar' ? (f.tens ? pal.tension : pal.compress) : f.kind === 'load' ? pal.load : pal.react;
+    // Separate labels of coincident forces while keeping every arrow at the joint.
+    var peers = forces.filter(function (other) {
+      return geometry.dx * other.ux - geometry.dy * other.uy > .995;
+    });
+    if (peers.length > 1) {
+      var offset = (peers.indexOf(f) - (peers.length - 1) / 2) * 14;
+      var ox = -geometry.dy * offset, oy = geometry.dx * offset;
+      geometry.labelX += ox; geometry.labelY += oy;
+    }
+    ctx.save(); if (f.unknown) ctx.setLineDash([5, 4]); arrow(ctx, geometry.x1, geometry.y1, geometry.x2, geometry.y2, col, 2.6, 10); ctx.restore();
+    var lx = geometry.labelX, ly = geometry.labelY, w;
+    ctx.font = '600 11px ' + FONT_NUM; w = Math.min(W - 16, ctx.measureText(tr(f.t)).width);
+    lx = Math.max(w / 2 + 6, Math.min(W - w / 2 - 6, lx + geometry.dx * w / 2)); ly = Math.max(30, Math.min(H - 26, ly + geometry.dy * 6));
+    label(ctx, f.t, lx, ly, pal, { color: col, weight: '600', size: 11, maxWidth: W - 16 });
   });
   ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 7); ctx.fill(); ctx.stroke();
   var sfx = 0, sfy = 0, part = false; forces.forEach(function (f) { if (f.unknown) part = true; else { sfx += f.fx; sfy += f.fy; } });
   ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  ctx.fillText(tr(part ? 'incógnitas sin resolver (hiperestática)' : 'ΣFx = ' + fmt(sfx, 3) + '   ΣFy = ' + fmt(sfy, 3) + ' kN'), 10, H - 9);
+  drawMathText(ctx, tr(part ? 'incógnitas sin resolver (hiperestática)' : 'ΣFx = ' + fmt(sfx, 3) + '   ΣFy = ' + fmt(sfy, 3) + ' kN'), 10, H - 9);
 }
 function drawBarFBD(ctx, W, H, m, res, bar, pal) {
-  frame(ctx, W, H, pal, 'Barra ' + bar.id + (bar.cable ? ' (cable)' : '') + '  ' + bar.a + '–' + bar.b);
+  frame(ctx, W, H, pal, 'Barra ' + nameOf(bar) + (bar.cable ? ' (cable)' : '') + '  ' + nodeName(m, bar.a) + '–' + nodeName(m, bar.b));
   var f = res.barForce[bar.id], y = H / 2 + 4, x1 = 62, x2 = W - 62;
   ctx.save(); ctx.strokeStyle = pal.ink; ctx.lineWidth = bar.cable ? 2.4 : 5; ctx.lineCap = 'round'; if (bar.cable) ctx.setLineDash([9, 5]);
   ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke(); ctx.restore();
   var txt, col = pal.muted;
   if (f.known && Math.abs(f.value) >= 1e-7) {
     var tens = f.value > 0; col = tens ? pal.tension : pal.compress;
-    if (tens) { arrow(ctx, x1 - 8, y, x1 - 50, y, col, 3, 11); arrow(ctx, x2 + 8, y, x2 + 50, y, col, 3, 11); }
-    else { arrow(ctx, x1 - 52, y, x1 - 8, y, col, 3, 11); arrow(ctx, x2 + 52, y, x2 + 8, y, col, 3, 11); }
+    if (tens) { arrow(ctx, x1, y, x1 - 50, y, col, 3, 11); arrow(ctx, x2, y, x2 + 50, y, col, 3, 11); }
+    else { arrow(ctx, x1, y, x1 + 50, y, col, 3, 11); arrow(ctx, x2, y, x2 - 50, y, col, 3, 11); }
     txt = 'S = ' + fmt(Math.abs(f.value), 2) + ' kN  ' + (tens ? 'TRACCIÓN' : 'COMPRESIÓN');
   } else txt = f.known ? 'S = 0 (barra de fuerza nula)' : 'S = ? (no determinable)';
   [[x1, bar.a], [x2, bar.b]].forEach(function (p) {
     ctx.fillStyle = pal.node; ctx.strokeStyle = pal.ink; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(p[0], y, 6.5, 0, 7); ctx.fill(); ctx.stroke();
-    label(ctx, p[1], p[0], y + 20, pal, { weight: '700', size: 13, font: FONT_UI, bg: false });
+    label(ctx, nodeName(m, p[1]), p[0], y + 20, pal, { weight: '700', size: 13, font: FONT_UI, bg: false, maxWidth: 116 });
   });
   label(ctx, txt, W / 2, y - 26, pal, { color: col, weight: '600', size: 12 });
   ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  ctx.fillText('L = ' + fmt(f.L, 3) + ' m   θ = ' + fmt(E.barAngle(m, bar), 1) + '°', 10, H - 9);
+  drawMathText(ctx, 'L = ' + fmt(f.L, 3) + ' m   θ = ' + fmt(E.barAngle(m, bar), 1) + '°', 10, H - 9);
 }
 function equilibriumSums(m, res) {
   var fx = 0, fy = 0, mo = 0, ok = true;
@@ -1095,8 +1271,8 @@ function drawStructFBD(ctx, W, H, m, res, pal) {
   drawModel(ctx, m, v, pal, { W: W, H: H, fbd: true, res: res, showLen: false });
   var s = equilibriumSums(m, res);
   ctx.font = '500 11px ' + FONT_NUM; ctx.fillStyle = pal.muted; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  ctx.fillText(tr(s.ok ? 'Equilibrio global: ΣFx = ' + fmt(s.fx, 3) + '  ΣFy = ' + fmt(s.fy, 3) + ' kN  ΣM(0,0) = ' + fmt(s.mo, 3) + ' kN·m' : 'Equilibrio global no comprobable (reacciones indeterminadas)'), 10, H - 9);
-  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textBaseline = 'top'; ctx.fillText(tr('Sólido libre de toda la estructura'), 10, 8);
+  drawMathText(ctx, tr(s.ok ? 'Equilibrio global: ΣFx = ' + fmt(s.fx, 3) + '  ΣFy = ' + fmt(s.fy, 3) + ' kN  ΣM(0,0) = ' + fmt(s.mo, 3) + ' kN·m' : 'Equilibrio global no comprobable (reacciones indeterminadas)'), 10, H - 9);
+  ctx.font = '700 15px ' + FONT_UI; ctx.fillStyle = pal.ink; ctx.textBaseline = 'top'; drawMathText(ctx, tr('Sólido libre de toda la estructura'), 10, 8);
 }
 
 /* ============ Estado de UI, historial y persistencia ============ */
@@ -1106,7 +1282,14 @@ var cv = $('cv'), ctx = cv.getContext('2d'), wrap = $('wrap');
 var ptrs = new Map(), pinch = null;
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-function es(n, d) { return fmt(n, d).replace('.', ','); }
+function htmlNum(v, d) {
+  var text = fmt(v, d), e = M.cfg.numberFormat === 'decimal' ? null : E.exactParts(v);
+  if (!e || (e.r === 1 && e.q === 1)) return '<span class="number">' + esc(text) + '</span>';
+  var a = Math.abs(e.p), inner = e.r === 1 ? '<mn>' + a + '</mn>' : (a === 1 ? '' : '<mn>' + a + '</mn>') + '<msqrt><mn>' + e.r + '</mn></msqrt>';
+  if (e.q !== 1) inner = '<mfrac><mrow>' + inner + '</mrow><mn>' + e.q + '</mn></mfrac>';
+  return '<span class="number" title="' + esc(E.editNumber(v)) + '"><math xmlns="http://www.w3.org/1998/Math/MathML" aria-label="' + esc(text) + '"><mrow>' + (e.p < 0 ? '<mo>−</mo>' : '') + inner + '</mrow></math></span>';
+}
+function es(n, d) { return htmlNum(n, d); }
 function toast(t) {
   var el = $('toast'); el.textContent = tr(t); el.classList.add('show');
   clearTimeout(toast.t); toast.t = setTimeout(function () { el.classList.remove('show'); }, 2800);
@@ -1118,6 +1301,10 @@ function normalizeModel(o) {
   f.nodes = o.nodes; f.bars = o.bars; f.loads = Array.isArray(o.loads) ? o.loads : []; f.groups = o.groups || {};
   f.dims = Array.isArray(o.dims) ? o.dims : []; f.angs = Array.isArray(o.angs) ? o.angs : [];
   Object.assign(f.cfg, o.cfg || {}); Object.assign(f.q, o.q || {});
+  var a = f.cfg.exportAnnotations || {};
+  f.cfg.exportAnnotations = { enabled: a.enabled !== false, groupEqual: a.groupEqual !== false,
+    selected: Array.isArray(a.selected) ? a.selected.filter(function (key) { return typeof key === 'string'; }) : null,
+    labels: a.labels && typeof a.labels === 'object' && !Array.isArray(a.labels) ? Object.assign({}, a.labels) : {} };
   return f;
 }
 function commit() {
@@ -1136,7 +1323,7 @@ function selExists() {
   return !!byId(map[sel.type], sel.id);
 }
 function refreshAll() {
-  syncSnapbar(); syncCables(); renderInspector(); renderGroups(); renderResults();
+  E.setNumberFormat(M.cfg.numberFormat); $('exerciseName').value = M.q.title || ''; syncSnapbar(); syncCables(); renderInspector(); renderGroups(); renderResults();
   $('undo').disabled = hi <= 0; $('redo').disabled = hi >= hist.length - 1;
   redraw();
 }
@@ -1481,6 +1668,7 @@ var TOOLS = [
   });
 })();
 document.addEventListener('keydown', function (e) {
+  if (!$('modal').hidden) return;
   var tag = (e.target && e.target.tagName) || '';
   if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) { if (hi < hist.length - 1) restore(hi + 1); } else if (hi > 0) restore(hi - 1); return; }
@@ -1500,12 +1688,12 @@ $('redo').onclick = function () { if (hi < hist.length - 1) restore(hi + 1); };
 function syncSnapbar() {
   var c = M.cfg;
   $('sGrid').checked = c.snapGrid; $('sStep').value = String(c.grid); $('sAng').value = String(c.snapAng);
-  $('sRel').checked = c.relAng; $('sLen').checked = c.snapLen; $('sShowLen').checked = c.showLen;
+  $('sRel').checked = c.relAng; $('sLen').checked = c.snapLen; $('sShowLen').checked = c.showLen; $('sFormat').value = c.numberFormat;
 }
 $('snapbar').addEventListener('change', function () {
   var c = M.cfg; c.snapGrid = $('sGrid').checked; c.grid = parseFloat($('sStep').value); c.snapAng = parseFloat($('sAng').value);
-  c.relAng = $('sRel').checked; c.snapLen = $('sLen').checked; c.showLen = $('sShowLen').checked;
-  saveLocal(); redraw();
+  c.relAng = $('sRel').checked; c.snapLen = $('sLen').checked; c.showLen = $('sShowLen').checked; c.numberFormat = $('sFormat').value;
+  E.setNumberFormat(c.numberFormat); saveLocal(); renderInspector(); renderGroups(); renderResults(); redraw();
 });
 
 /* ============ Pestañas ============ */
@@ -1516,29 +1704,31 @@ function setSide(name) {
 $('tabProps').onclick = function () { setSide('props'); }; $('tabRes').onclick = function () { setSide('res'); };
 
 /* ============ Inspector ============ */
-function numField(k, label, v, step, extra) { return '<label class="f"><span>' + label + '</span><input data-k="' + k + '" type="number" step="' + (step || 'any') + '" value="' + (v == null ? '' : +(+v).toFixed(4)) + '"' + (extra || '') + '></label>'; }
+function numField(k, label, v, step, extra) { return '<label class="f"><span>' + label + '</span><input data-k="' + k + '" type="text" inputmode="text" title="Admite 4raiz(2), √2 y 1/3." value="' + (v == null ? '' : esc(E.editNumber(v))) + '"' + (extra || '') + '></label>'; }
+function nameField(item, key, label) { key = key || 'name'; return '<label class="f"><span>' + (label || 'Nombre personalizado') + '</span><input data-k="' + key + '" type="text" maxlength="80" value="' + esc(item[key] || '') + '" placeholder="' + esc(item.id) + '"></label>'; }
+$('exerciseName').addEventListener('change', function () { M.q.title = this.value.trim().slice(0, 100); commit(); });
 function renderInspector() {
   var el = $('inspector'), h = '';
   if (!sel || !selExists()) { el.innerHTML = tr('<p class="empty">Nada seleccionado. Elige un nudo, una barra, una fuerza o una cota para editar sus medidas.</p>'); return; }
   if (sel.type === 'node') {
     var n = byId(M.nodes, sel.id);
-    h = '<div class="glist"><b>Nudo ' + n.id + '</b><div class="row">' + numField('x', 'x (m)', n.x, 0.01) + numField('y', 'y (m)', n.y, 0.01) + '</div>' +
+    h = '<div class="glist"><b>Nudo ' + esc(nameOf(n)) + '</b>' + nameField(n) + '<p class="empty">Vacío: usar el identificador original.</p><div class="row">' + numField('x', 'x (m)', n.x, 0.01) + numField('y', 'y (m)', n.y, 0.01) + '</div>' +
       '<label class="f"><span>Apoyo</span><select data-k="support"><option value="">Sin apoyo</option><option value="pin"' + (n.support === 'pin' ? ' selected' : '') + '>Fijo (articulación)</option><option value="roller"' + (n.support === 'roller' ? ' selected' : '') + '>Móvil (rodillo)</option></select></label>' +
-      (n.support ? numField('normal', n.support === 'roller' ? 'Dirección de la reacción del móvil (°)' : 'Orientación del dibujo del apoyo (°)', n.normal == null ? 90 : n.normal, 1) : '') +
+      (n.support ? nameField(n, 'supportName', 'Nombre del apoyo') + numField('normal', n.support === 'roller' ? 'Dirección de la reacción del móvil (°)' : 'Orientación del dibujo del apoyo (°)', n.normal == null ? 90 : n.normal, 1) : '') +
       '<div class="btns"><button class="btn small" data-act="addForce">+ Fuerza</button><button class="btn small" data-act="addWeight">+ Peso</button><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
   } else if (sel.type === 'bar') {
     var b = byId(M.bars, sel.id), others = M.bars.filter(function (x) { return x.id !== b.id; });
-    h = '<div class="glist"><b>Barra ' + b.id + ' <span style="color:var(--muted);font-weight:400">(' + b.a + '–' + b.b + ')</span></b><div class="row">' +
+    h = '<div class="glist"><b>Barra ' + esc(nameOf(b)) + ' <span style="color:var(--muted);font-weight:400">(' + esc(nodeName(M, b.a)) + '–' + esc(nodeName(M, b.b)) + ')</span></b>' + nameField(b) + '<div class="row">' +
       numField('len', 'Longitud (m)', E.barLength(M, b), 0.01, ' min="0.01"') + numField('ang', 'Ángulo (° desde +x)', E.barAngle(M, b), 0.5) + '</div>' +
       '<label class="f"><span>Longitud base</span><select data-k="group"><option value="">Sin referencia (se calcula)</option>' +
       Object.keys(M.groups).map(function (g) { return '<option value="' + esc(g) + '"' + (b.group === g ? ' selected' : '') + '>' + esc(g) + ' = ' + fmt(M.groups[g], 3) + ' m</option>'; }).join('') +
       '<option value="__new">Nueva base con esta longitud</option></select></label>' +
-      (others.length ? '<label class="f"><span>Igualar su longitud a la de…</span><select data-k="eq"><option value="">—</option>' + others.map(function (o) { return '<option value="' + o.id + '">' + o.id + ' (' + fmt(E.barLength(M, o), 3) + ' m)</option>'; }).join('') + '</select></label>' : '') +
+      (others.length ? '<label class="f"><span>Igualar su longitud a la de…</span><select data-k="eq"><option value="">—</option>' + others.map(function (o) { return '<option value="' + esc(o.id) + '">' + esc(nameOf(o)) + ' (' + fmt(E.barLength(M, o), 3) + ' m)</option>'; }).join('') + '</select></label>' : '') +
       '<label class="f chk"><input type="checkbox" data-k="cable"' + (b.cable ? ' checked' : '') + '><span>Es un cable (solo tracción)</span></label>' +
       '<div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
   } else if (sel.type === 'load') {
     var l = byId(M.loads, sel.id);
-    h = '<div class="glist"><b>' + (l.kind === 'peso' ? 'Peso ' : 'Fuerza ') + l.id + ' <span style="color:var(--muted);font-weight:400">en el nudo ' + l.node + '</span></b>' +
+    h = '<div class="glist"><b>' + (l.kind === 'peso' ? 'Peso ' : 'Fuerza ') + esc(nameOf(l)) + ' <span style="color:var(--muted);font-weight:400">en el nudo ' + esc(nodeName(M, l.node)) + '</span></b>' + nameField(l) +
       '<label class="f"><span>Tipo</span><select data-k="kind"><option value="fuerza"' + (l.kind !== 'peso' ? ' selected' : '') + '>Fuerza</option><option value="peso"' + (l.kind === 'peso' ? ' selected' : '') + '>Peso de una masa</option></select></label>';
     h += '<label class="f chk"><input type="checkbox" data-k="showVal"' + (l.showVal === false ? '' : ' checked') + '><span>Mostrar el valor (kN) en el dibujo</span></label>';
     if (l.kind === 'peso') h += numField('mass', 'Masa (kg)', l.mass, 1, ' min="0"') + '<p class="empty">P = m·g con g = 9,81 m/s² = ' + es(l.F, 3) + ' kN, vertical hacia abajo.</p>';
@@ -1547,16 +1737,16 @@ function renderInspector() {
     h += '<div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
   } else if (sel.type === 'dim') {
     var d = byId(M.dims, sel.id), g = dimGeom(M, view, d);
-    h = '<div class="glist"><b>Cota ' + d.a + '–' + d.b + '</b>' + numField('val', 'Distancia (m)', g.L, 0.01, ' min="0.01"') +
-      numField('off', 'Separación de la cota (m)', d.off, 0.05) + '<p class="empty">Cambiar la distancia mueve el nudo ' + d.b + '. Si hay una barra entre ambos, se ajusta su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+    h = '<div class="glist"><b>Cota ' + esc(nameOf(d)) + ' (' + esc(nodeName(M, d.a)) + '–' + esc(nodeName(M, d.b)) + ')</b>' + nameField(d) + numField('val', 'Distancia (m)', g.L, 0.01, ' min="0.01"') +
+      numField('off', 'Separación de la cota (m)', d.off, 0.05) + '<p class="empty">Cambiar la distancia mueve el nudo ' + esc(nodeName(M, d.b)) + '. Si hay una barra entre ambos, se ajusta su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
   } else if (sel.type === 'ang') {
     var an = byId(M.angs, sel.id), ag = angGeom(M, view, an);
-    h = '<div class="glist"><b>Ángulo en el nudo ' + an.node + '</b>' + numField('val', an.b2 ? tf('Entre {0} y {1} (°)', [an.b1, an.b2]) : tf('De {0} con la horizontal (°)', [an.b1]), ag.deg, 0.5, ' min="0" max="180"') +
-      numField('r', 'Distancia del arco al nudo (px)', 26 + (an.r || 0), 1, ' min="12" max="450"') + '<p class="empty">También puedes arrastrar la cota del ángulo para alejarla o acercarla. Cambiar el valor gira ' + (an.b2 ? 'la barra ' + an.b2 : 'la barra ' + an.b1) + ' alrededor del nudo ' + an.node + ', manteniendo su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
+    h = '<div class="glist"><b>Ángulo en el nudo ' + esc(nodeName(M, an.node)) + '</b>' + nameField(an) + numField('val', an.b2 ? tf('Entre {0} y {1} (°)', [esc(barName(M, an.b1)), esc(barName(M, an.b2))]) : tf('De {0} con la horizontal (°)', [esc(barName(M, an.b1))]), ag.deg, 0.5, ' min="0" max="180"') +
+      numField('r', 'Distancia del arco al nudo (px)', 26 + (an.r || 0), 1, ' min="12" max="450"') + '<p class="empty">También puedes arrastrar la cota del ángulo para alejarla o acercarla. Cambiar el valor gira ' + (an.b2 ? 'la barra ' + esc(barName(M, an.b2)) : 'la barra ' + esc(barName(M, an.b1))) + ' alrededor del nudo ' + esc(nodeName(M, an.node)) + ', manteniendo su longitud.</p><div class="btns"><button class="btn small danger" data-act="del">Eliminar</button></div></div>';
   }
   el.innerHTML = tr(h);
 }
-function num(el) { var v = parseFloat(String(el.value).replace(',', '.')); return isFinite(v) ? v : null; }
+function num(el) { return E.parseNumber(el.value); }
 $('inspector').addEventListener('click', function (e) {
   var a = e.target.closest('[data-act]'); if (!a || !sel) return;
   if (a.dataset.act === 'del') delItem(sel);
@@ -1564,6 +1754,16 @@ $('inspector').addEventListener('click', function (e) {
 });
 $('inspector').addEventListener('change', function (e) {
   var el = e.target, k = el.dataset.k; if (!k || !sel) return;
+  if (k === 'name' || k === 'supportName') {
+    var collections = { node: M.nodes, bar: M.bars, load: M.loads, dim: M.dims, ang: M.angs };
+    byId(collections[sel.type], sel.id)[k] = el.value.trim().slice(0, 80); commit(); return;
+  }
+  if (el.type === 'text') {
+    var parsed = num(el), min = el.getAttribute('min'), max = el.getAttribute('max');
+    if (parsed == null || (min !== null && parsed < +min) || (max !== null && parsed > +max)) {
+      toast('Introduce un número o una expresión válida, como 4raiz(2) o 1/3.'); renderInspector(); return;
+    }
+  }
   var v = el.type === 'checkbox' ? el.checked : (el.tagName === 'SELECT' ? el.value : num(el));
   if (sel.type === 'node') {
     var n = byId(M.nodes, sel.id);
@@ -1615,13 +1815,13 @@ function renderGroups() {
   el.innerHTML = tr(names.map(function (g) {
     var cnt = M.bars.filter(function (b) { return b.group === g; }).length;
     return '<div class="grow" data-g="' + esc(g) + '"><label class="f"><span>Nombre (' + cnt + (cnt === 1 ? ' barra' : ' barras') + ')</span><input data-gk="name" type="text" value="' + esc(g) + '"></label>' +
-      '<label class="f"><span>Longitud (m)</span><input data-gk="val" type="number" step="any" min="0.01" value="' + +(+M.groups[g]).toFixed(4) + '"></label><button class="btn small danger" data-gdel="' + esc(g) + '" title="Quitar esta longitud base">✕</button></div>';
+      '<label class="f"><span>Longitud (m)</span><input data-gk="val" type="text" title="Admite 4raiz(2), √2 y 1/3." value="' + esc(E.editNumber(M.groups[g])) + '"></label><button class="btn small danger" data-gdel="' + esc(g) + '" title="Quitar esta longitud base">✕</button></div>';
   }).join(''));
 }
 $('groups').addEventListener('change', function (e) {
   var row = e.target.closest('[data-g]'), k = e.target.dataset.gk; if (!row || !k) return;
   var g = row.dataset.g;
-  if (k === 'val') { var v = num(e.target); if (v && v > 0) { M.groups[g] = v; applyGroup(g); commit(); } else renderGroups(); }
+  if (k === 'val') { var v = num(e.target); if (v != null && v >= 0.01) { M.groups[g] = v; applyGroup(g); commit(); } else { toast('Introduce un número o una expresión válida, como 4raiz(2) o 1/3.'); renderGroups(); } }
   else if (k === 'name') {
     var nn = e.target.value.trim();
     if (!nn || (nn !== g && M.groups[nn] != null)) { toast('Ese nombre ya existe o está vacío.'); renderGroups(); return; }
@@ -1646,7 +1846,7 @@ function checkData() {
   var res = E.analyze(M), miss = [];
   if (res.status === 'vacio') return { res: res, miss: res.messages.slice() };
   miss = E.checkMissing(M, res, qEff());
-  M.loads.forEach(function (l) { if (l.F == null) miss.push('La carga ' + l.id + ' no tiene valor.'); });
+  M.loads.forEach(function (l) { if (l.F == null) miss.push('La carga ' + nameOf(l) + ' no tiene valor.'); });
   return { res: res, miss: miss };
 }
 function statusText(res) {
@@ -1658,16 +1858,19 @@ function statusText(res) {
 }
 
 /* ============ Cables ============ */
-function numQ(s) { var v = parseFloat(String(s).replace(',', '.')); return isFinite(v) ? v : 0; }
-function syncCables() { $('cSigma').value = M.q.sigma || ''; $('cFy').value = M.q.fy || ''; $('cN').value = M.q.safety || ''; }
+function numQ(s) { var v = E.parseNumber(s); return v == null ? 0 : v; }
+function syncCables() { $('cSigma').value = E.editNumber(M.q.sigma); $('cFy').value = E.editNumber(M.q.fy); $('cN').value = E.editNumber(M.q.safety); }
 ['cSigma', 'cFy', 'cN'].forEach(function (id) {
-  $(id).addEventListener('change', function () { M.q.sigma = $('cSigma').value; M.q.fy = $('cFy').value; M.q.safety = $('cN').value; saveLocal(); renderResults(); });
+  $(id).addEventListener('change', function () {
+    if (this.value.trim() && (num(this) == null || num(this) <= 0)) { toast('Introduce un número o una expresión válida, como 4raiz(2) o 1/3.'); syncCables(); return; }
+    var key = { cSigma: 'sigma', cFy: 'fy', cN: 'safety' }[id];
+    M.q[key] = this.value; syncCables(); saveLocal(); renderResults(); });
 });
 function sigmaAdm() { var s = numQ(M.q.sigma), fy = numQ(M.q.fy), n = numQ(M.q.safety); return s > 0 ? s : (fy > 0 && n > 0 ? fy / n : 0); }
 function cableRows(res) {
   var sg = sigmaAdm();
   return M.bars.filter(function (b) { return b.cable; }).map(function (b) {
-    var f = res.barForce[b.id], r = { id: b.id, known: f.known, S: f.value, sigma: sg };
+    var f = res.barForce[b.id], r = { id: nameOf(b), known: f.known, S: f.value, sigma: sg };
     if (!f.known) { r.msg = 'esfuerzo no determinable (estructura hiperestática)'; return r; }
     r.F = Math.abs(f.value);
     if (f.value < -1e-7) { r.msg = 'está a compresión (' + fmt(r.F, 3) + ' kN): un cable no puede trabajar así'; return r; }
@@ -1702,16 +1905,16 @@ function renderResults() {
   else h += '<div class="msg ok">' + statusText(res) + '</div>';
   if (R.miss.length) h += '<div class="msg bad"><b>Faltan datos para calcular:</b><ul>' + R.miss.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
   res.warnings.forEach(function (m) { h += '<div class="msg warn">' + esc(m) + '</div>'; });
-  h += '</div>';
+  h += '</div><p class="empty">Raíces y fracciones reconocidas con tolerancia numérica; ≈ indica un valor aproximado.</p>';
   if (R.ans) h += '<div class="sec"><h3>Respuesta</h3><div class="card answer">' + R.ans.lines.map(function (l, i) { return (i === 0 ? '<b>' + esc(l) + '</b>' : esc(l)); }).join('<br>') + '</div></div>';
   if (res.status === 'isostatica' || res.status === 'hiperestatica') {
     h += '<div class="sec"><h3>Barras</h3><table class="res"><thead><tr><th>Barra</th><th>L (m)</th><th>S (kN)</th><th>Esfuerzo</th></tr></thead><tbody>' +
-      M.bars.map(function (b) { var f = res.barForce[b.id]; return '<tr><td>' + b.id + '</td><td>' + fmt(f.L, 3) + '</td><td>' + (f.known ? fmt(Math.abs(f.value), 3) : '?') + '</td><td>' + typeCell(f) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      M.bars.map(function (b) { var f = res.barForce[b.id]; return '<tr><td>' + esc(nameOf(b)) + '</td><td>' + htmlNum(f.L, 3) + '</td><td>' + (f.known ? htmlNum(Math.abs(f.value), 3) : '?') + '</td><td>' + typeCell(f) + '</td></tr>'; }).join('') + '</tbody></table></div>';
     var cr = cableRows(res);
-    if (cr.length) h += '<div class="sec"><h3>Cables</h3>' + cr.map(function (r) { return '<div class="card answer" style="margin-bottom:6px">' + (r.d != null ? '<b>Cable ' + r.id + ': d = ' + fmt(r.d, 2) + ' mm</b><br>S = ' + fmt(r.F, 3) + ' kN · σadm = ' + fmt(r.sigma, 2) + ' MPa<br>A = S / σadm = ' + fmt(r.A, 2) + ' mm²' : '<b>Cable ' + r.id + '</b><br>' + esc(r.msg)) + '</div>'; }).join('') + '</div>';
+    if (cr.length) h += '<div class="sec"><h3>Cables</h3>' + cr.map(function (r) { return '<div class="card answer" style="margin-bottom:6px">' + (r.d != null ? '<b>Cable ' + esc(r.id) + ': d = ' + htmlNum(r.d, 2) + ' mm</b><br>S = ' + htmlNum(r.F, 3) + ' kN · σadm = ' + htmlNum(r.sigma, 2) + ' MPa<br>A = S / σadm = ' + htmlNum(r.A, 2) + ' mm²' : '<b>Cable ' + esc(r.id) + '</b><br>' + esc(r.msg)) + '</div>'; }).join('') + '</div>';
     var rk = Object.keys(res.reactions);
     if (rk.length) h += '<div class="sec"><h3>Reacciones</h3><table class="res"><thead><tr><th>Nudo</th><th>Rx (kN)</th><th>Ry (kN)</th><th>|R| (kN)</th></tr></thead><tbody>' +
-      rk.map(function (id) { var r = res.reactions[id]; return '<tr><td>' + id + '</td><td>' + (r.known ? fmt(r.fx, 3) : '?') + '</td><td>' + (r.known ? fmt(r.fy, 3) : '?') + '</td><td>' + (r.known ? fmt(Math.hypot(r.fx, r.fy), 3) : '?') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+      rk.map(function (id) { var r = res.reactions[id]; return '<tr><td>' + esc(nodeName(M, id)) + (byId(M.nodes, id).supportName ? ' · ' + esc(byId(M.nodes, id).supportName) : '') + '</td><td>' + (r.known ? htmlNum(r.fx, 3) : '?') + '</td><td>' + (r.known ? htmlNum(r.fy, 3) : '?') + '</td><td>' + (r.known ? htmlNum(Math.hypot(r.fx, r.fy), 3) : '?') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
   box.innerHTML = tr(h);
   if (res.status === 'isostatica' || res.status === 'hiperestatica') { sec.hidden = false; renderFBD(); } else sec.hidden = true;
@@ -1734,6 +1937,15 @@ function renderFBD() {
 function showModal(html) { $('modalBox').innerHTML = tr(html + '<div class="btns"><button class="btn" id="mClose">Cerrar</button></div>'); $('modal').hidden = false; $('mClose').onclick = function () { $('modal').hidden = true; }; }
 $('modal').addEventListener('click', function (e) { if (e.target === $('modal')) $('modal').hidden = true; });
 async function deliver(filename, data, kind, preview) {
+  if (kind === 'json') {
+    var blob = new Blob([data], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob), link = document.createElement('a');
+    link.href = url; link.download = filename; link.hidden = true;
+    document.body.appendChild(link);
+    try { link.click(); }
+    finally { link.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 30000); }
+    return;
+  }
   var dl = null;
   try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dl = null; }
   if (dl) {
@@ -1741,25 +1953,171 @@ async function deliver(filename, data, kind, preview) {
     catch (err) { if (err && err.code === 'declined') { toast('Descarga cancelada.'); return; } }
   }
   if (kind === 'png') showModal('<b>' + esc(filename) + '</b><img alt="Imagen exportada" src="' + preview + '"><p class="empty">Mantén pulsada la imagen (móvil) o haz clic derecho y elige «Guardar imagen como…».</p>');
-  else showModal('<b>' + esc(filename) + '</b><textarea readonly>' + esc(data) + '</textarea><p class="empty">Copia el texto y guárdalo en un archivo .json.</p>');
 }
 async function savePng(canvas, filename) {
   var blob = await new Promise(function (r) { canvas.toBlob(r, 'image/png'); });
   await deliver(filename, blob, 'png', canvas.toDataURL('image/png'));
 }
-async function exportScheme() {
+
+/* ---------- Selectable export data and the separate bottom-right box ---------- */
+function annotationSettings() {
+  var options = M.cfg.exportAnnotations;
+  if (!options) options = M.cfg.exportAnnotations = { enabled: true, groupEqual: true, selected: null, labels: {} };
+  return options;
+}
+function annotationItems() {
+  var items = [];
+  function add(key, name, value, unit, category, selected) {
+    items.push({ key: key, name: String(name), value: Number.isFinite(value) ? value : null,
+      unit: unit, category: category, selected: selected !== false });
+  }
+  M.bars.forEach(function (b) { add('bar:' + b.id, nameOf(b), E.barLength(M, b), 'm', 'Barras'); });
+  M.dims.forEach(function (d) { add('dim:' + d.id, d.name || nodeName(M, d.a) + '–' + nodeName(M, d.b), E.barLength(M, d), 'm', 'Cotas'); });
+  Object.keys(M.groups).forEach(function (key) { add('group:' + key, key, M.groups[key], 'm', 'Longitudes base', false); });
+  M.angs.forEach(function (a) { add('ang:' + a.id, a.name || 'θ(' + nodeName(M, a.node) + ')', angGeom(M, view, a).deg, '°', 'Ángulos'); });
+  M.loads.forEach(function (l) {
+    add('load:' + l.id, nameOf(l), l.F, 'kN', 'Fuerzas');
+    if (l.kind === 'peso') add('mass:' + l.id, 'm(' + nameOf(l) + ')', l.mass, 'kg', 'Masas', false);
+  });
+  return items;
+}
+function sameAnnotationValue(a, b) {
+  // Compare numerical values and units, never their rounded display strings.
+  if (a.unit !== b.unit || a.value === null || b.value === null) return false;
+  var tolerance = Math.min(1e-8, 1e-9 * Math.max(1, Math.abs(a.value), Math.abs(b.value)));
+  return Math.abs(a.value - b.value) <= tolerance;
+}
+function groupedAnnotations(items, options) {
+  if (!options.enabled) return [];
+  var selected = options.selected === null ? null : new Set(options.selected), groups = [];
+  items.forEach(function (item) {
+    if (selected ? !selected.has(item.key) : !item.selected) return;
+    var alias = options.labels[item.key], name = typeof alias === 'string' && alias.trim() ? alias.trim().slice(0, 80) : item.name;
+    var group = options.groupEqual ? groups.find(function (other) { return sameAnnotationValue(item, other); }) : null;
+    if (!group) { group = { names: [], value: item.value, unit: item.unit }; groups.push(group); }
+    if (group.names.indexOf(name) < 0) group.names.push(name);
+  });
+  return groups;
+}
+function annotationLine(group) {
+  return group.names.join(', ') + ' = ' + fmt(group.value, 3) + (group.unit === '°' ? '' : ' ') + group.unit;
+}
+function makeAnnotationBox(ctx, groups, maxWidth) {
+  if (!groups.length) return null;
+  var pad = 16, fontSize = 15, lineHeight = 22;
+  ctx.save(); ctx.font = '400 ' + fontSize + 'px ' + FONT_NUM;
+  var text = groups.map(annotationLine), widest = 0;
+  text.forEach(function (line) { widest = Math.max(widest, ctx.measureText(line).width); });
+  var width = Math.min(maxWidth, Math.max(250, widest + 2 * pad));
+  var lines = [];
+  text.forEach(function (line) { wrapText(ctx, line, width - 2 * pad).forEach(function (part) { lines.push(part); }); });
+  ctx.restore();
+  return { width: width, height: 58 + lines.length * lineHeight, pad: pad, lines: lines, lineHeight: lineHeight, fontSize: fontSize };
+}
+function drawAnnotationBox(ctx, box, x, y, pal) {
+  if (!box) return;
+  ctx.save(); ctx.fillStyle = pal.bg; ctx.fillRect(x, y, box.width, box.height);
+  ctx.strokeStyle = pal.ink; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, box.width - 1, box.height - 1);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = pal.ink;
+  ctx.font = '700 18px ' + FONT_UI; drawMathText(ctx, trx('Datos'), x + box.pad, y + 12);
+  ctx.strokeStyle = pal.gridMajor; ctx.beginPath(); ctx.moveTo(x + box.pad, y + 38); ctx.lineTo(x + box.width - box.pad, y + 38); ctx.stroke();
+  ctx.font = '400 ' + box.fontSize + 'px ' + FONT_NUM;
+  box.lines.forEach(function (line, i) { drawMathText(ctx, line, x + box.pad, y + 47 + i * box.lineHeight); });
+  ctx.restore();
+}
+function openAnnotationMenu(kind) {
+  if (!M.nodes.length) { toast('No hay nada que exportar.'); return; }
+  var trigger = document.activeElement, options = annotationSettings(), items = annotationItems();
+  showModal('<section class="annotation-menu" role="dialog" aria-modal="true" aria-labelledby="annotationTitle">' +
+    '<h2 id="annotationTitle">Acotaciones de la exportación</h2>' +
+    '<p class="empty">Elige los datos del recuadro inferior derecho. Puedes editar sus etiquetas solo para la exportación.</p>' +
+    '<label class="f chk"><input type="checkbox" id="annotationEnabled"><span>Añadir recuadro de datos</span></label>' +
+    '<fieldset class="annotation-controls" id="annotationControls"><label class="f chk"><input type="checkbox" id="annotationGroup"><span>Agrupar valores iguales</span></label>' +
+    '<div class="btns"><button type="button" class="btn small" id="annotationAll">Seleccionar todos</button><button type="button" class="btn small" id="annotationNone">Quitar selección</button></div>' +
+    '<div class="annotation-list" id="annotationList"></div></fieldset>' +
+    '<div class="annotation-preview" id="annotationPreview" role="region" aria-label="Vista previa del recuadro"></div>' +
+    '<div class="annotation-footer"><span class="empty" id="annotationKind"></span><button type="button" class="btn primary" id="annotationExport">Exportar PNG</button></div></section>');
+  $('annotationKind').textContent = trx(kind === 'sheet' ? 'PNG de la hoja' : 'PNG del esquema');
+  var selected = options.selected === null ? null : new Set(options.selected), categories = new Map();
+  items.forEach(function (item, i) {
+    var fieldset = categories.get(item.category);
+    if (!fieldset) {
+      fieldset = document.createElement('fieldset'); fieldset.className = 'annotation-group';
+      var legend = document.createElement('legend'); legend.textContent = trx(item.category); fieldset.appendChild(legend);
+      $('annotationList').appendChild(fieldset); categories.set(item.category, fieldset);
+    }
+    var row = document.createElement('div'); row.className = 'annotation-row';
+    var check = document.createElement('input'); check.type = 'checkbox'; check.dataset.annotationIndex = i;
+    check.checked = selected ? selected.has(item.key) : item.selected;
+    check.setAttribute('aria-label', trx('Incluir este dato') + ': ' + item.name);
+    var field = document.createElement('label'); field.className = 'f';
+    var title = document.createElement('span'); title.textContent = item.name;
+    var input = document.createElement('input'); input.type = 'text'; input.maxLength = 80; input.dataset.annotationLabel = i;
+    input.value = typeof options.labels[item.key] === 'string' ? options.labels[item.key] : item.name;
+    input.placeholder = item.name; input.setAttribute('aria-label', trx('Etiqueta en la exportación') + ': ' + item.name);
+    field.appendChild(title); field.appendChild(input);
+    var value = document.createElement('span'); value.className = 'annotation-value'; value.innerHTML = htmlNum(item.value, 3) + (item.unit === '°' ? '' : ' ') + esc(item.unit);
+    row.appendChild(check); row.appendChild(field); row.appendChild(value); fieldset.appendChild(row);
+  });
+  $('annotationEnabled').checked = options.enabled; $('annotationGroup').checked = options.groupEqual;
+  function readOptions() {
+    options.enabled = $('annotationEnabled').checked; options.groupEqual = $('annotationGroup').checked;
+    options.selected = [];
+    $('annotationList').querySelectorAll('[data-annotation-index]').forEach(function (check) { if (check.checked) options.selected.push(items[+check.dataset.annotationIndex].key); });
+    $('annotationList').querySelectorAll('[data-annotation-label]').forEach(function (input) { options.labels[items[+input.dataset.annotationLabel].key] = input.value.trim().slice(0, 80); });
+  }
+  function updatePreview(persist) {
+    readOptions(); $('annotationControls').disabled = !options.enabled;
+    var groups = groupedAnnotations(items, options);
+    $('annotationPreview').innerHTML = groups.length ? '<h3>' + esc(trx('Datos')) + '</h3>' + groups.map(function (group) {
+      return '<p>' + esc(group.names.join(', ')) + ' = ' + htmlNum(group.value, 3) + (group.unit === '°' ? '' : ' ') + esc(group.unit) + '</p>';
+    }).join('') : '<p class="empty">' + esc(trx('No se añadirá ningún recuadro.')) + '</p>';
+    $('annotationExport').textContent = trx(groups.length ? 'Exportar PNG' : 'Exportar sin recuadro');
+    if (persist) saveLocal();
+  }
+  ['annotationEnabled', 'annotationGroup', 'annotationList'].forEach(function (id) { $(id).addEventListener('change', function () { updatePreview(true); }); });
+  $('annotationList').addEventListener('input', function (e) { if (e.target.matches('[data-annotation-label]')) updatePreview(true); });
+  function selectAll(checked) { $('annotationList').querySelectorAll('[data-annotation-index]').forEach(function (check) { check.checked = checked; }); updatePreview(true); }
+  $('annotationAll').onclick = function () { selectAll(true); }; $('annotationNone').onclick = function () { selectAll(false); };
+  $('annotationExport').onclick = async function () {
+    readOptions(); saveLocal(); var groups = groupedAnnotations(items, options), button = this;
+    button.disabled = true; button.textContent = trx('Preparando imagen…');
+    try {
+      if (kind === 'sheet') await exportSheet(groups); else await exportScheme(groups);
+      if (button.isConnected) { $('modal').hidden = true; if (trigger && trigger.focus) trigger.focus(); }
+    }
+    catch (e) { button.disabled = false; updatePreview(false); toast('No se ha podido preparar la imagen. Vuelve a intentarlo.'); }
+  };
+  var close = $('mClose'); close.onclick = function () { $('modal').hidden = true; if (trigger && trigger.focus) trigger.focus(); };
+  updatePreview(false); $('annotationEnabled').focus();
+}
+// Keep keyboard navigation inside the open dialog and allow Escape to close it.
+$('modal').addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') { e.preventDefault(); $('mClose').click(); return; }
+  if (e.key !== 'Tab') return;
+  var focusable = Array.from($('modalBox').querySelectorAll('button,input,select,textarea,a[href]')).filter(function (el) { return !el.matches(':disabled') && el.getClientRects().length; });
+  var first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+async function exportScheme(annotationGroups) {
   if (!M.nodes.length) { toast('No hay nada que exportar.'); return; }
   try { await document.fonts.ready; } catch (e) { }
   var xs = M.nodes.map(function (n) { return n.x; }), ys = M.nodes.map(function (n) { return n.y; });
   var bw = Math.max(Math.max.apply(null, xs) - Math.min.apply(null, xs), 0.5), bh = Math.max(Math.max.apply(null, ys) - Math.min.apply(null, ys), 0.5);
   var s = Math.max(40, Math.min(150, 1000 / (bw + 2.5))), W = Math.round(Math.max(640, (bw + 2.6) * s + 140)), H = Math.round(Math.max(420, (bh + 2.6) * s + 160));
-  var c = document.createElement('canvas'), k = 2; c.width = W * k; c.height = H * k;
-  var g = c.getContext('2d'); g.scale(k, k);
+  var measure = document.createElement('canvas').getContext('2d');
+  var box = makeAnnotationBox(measure, annotationGroups || [], Math.min(420, W - 48));
+  var totalH = H + (box ? box.height + 40 : 0);
+  var c = document.createElement('canvas'), k = 2; c.width = W * k; c.height = totalH * k;
+  var g = c.getContext('2d'); g.scale(k, k); g.fillStyle = EXPORT_PAL.bg; g.fillRect(0, 0, W, totalH);
   var v = { s: s, ox: W / 2 - (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2 * s, oy: H / 2 + (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2 * s };
   drawModel(g, M, v, EXPORT_PAL, { W: W, H: H, grid: false, res: R && R.res });
+  if (box) drawAnnotationBox(g, box, W - 24 - box.width, totalH - 24 - box.height, EXPORT_PAL);
   await savePng(c, 'esquema-estatica.png');
 }
-async function exportSheet() {
+async function exportSheet(annotationGroups) {
   if (!M.nodes.length) { toast('No hay nada que exportar.'); return; }
   try { await document.fonts.ready; } catch (e) { }
   var c0 = checkData(); R = { res: c0.res, miss: c0.miss, ans: null, q: qEff() };
@@ -1768,7 +2126,7 @@ async function exportSheet() {
   var mc = document.createElement('canvas').getContext('2d'), ops = [], y = mar;
   function add(h, fn) { ops.push({ y: y, h: h, fn: fn }); y += h; }
   mc.font = '400 15px ' + FONT_UI;
-  add(34, function (g, y0) { g.font = '700 26px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(tr('Ejercicio de estática'), mar, y0); });
+  add(34, function (g, y0) { g.font = '700 26px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; drawMathText(g, M.q.title || tr('Ejercicio de estática'), mar, y0); });
   var dh = 420;
   add(dh + 14, function (g, y0) { var v = fitView(M, inner, dh, 70, 130); g.save(); g.translate(mar, y0); g.beginPath(); g.rect(0, 0, inner, dh); g.clip(); drawModel(g, M, v, pal, { W: inner, H: dh, grid: false, res: ok ? res : null }); g.restore(); g.strokeStyle = pal.gridMajor; g.lineWidth = 1; g.strokeRect(mar + 0.5, y0 + 0.5, inner - 1, dh - 1); });
   if (ok || R.miss.length) {
@@ -1776,26 +2134,28 @@ async function exportSheet() {
     if (ok && !R.miss.length) {
       lines = ['RESULTADOS', statusText(res)].concat(E.answer(M, res, { type: 'all_bars' }).lines);
       cableRows(res).forEach(function (r, i) { if (i === 0) lines.push('CABLES'); lines.push(cableLine(r)); });
-      Object.keys(res.reactions).forEach(function (id) { var r = res.reactions[id]; lines.push(r.known ? 'Reacción en ' + id + ': Rx = ' + fmt(r.fx, 3) + ' kN, Ry = ' + fmt(r.fy, 3) + ' kN' : 'Reacción en ' + id + ': no determinable'); });
+      Object.keys(res.reactions).forEach(function (id) { var r = res.reactions[id]; lines.push(r.known ? 'Reacción en ' + nodeName(M, id) + ': Rx = ' + fmt(r.fx, 3) + ' kN, Ry = ' + fmt(r.fy, 3) + ' kN' : 'Reacción en ' + nodeName(M, id) + ': no determinable'); });
     }
     mc.font = '400 15px ' + FONT_NUM; var wl = []; lines.forEach(function (l) { wrapText(mc, tr(l), inner).forEach(function (x) { wl.push(x); }); });
-    add(wl.length * 22 + 16, function (g, y0) { g.textAlign = 'left'; g.textBaseline = 'top'; wl.forEach(function (l, i) { g.font = (i === 0 ? '700 16px ' + FONT_UI : '400 14px ' + FONT_NUM); g.fillStyle = R.miss.length ? pal.compress : pal.ink; g.fillText(l, mar, y0 + i * 22); }); });
+    add(wl.length * 22 + 16, function (g, y0) { g.textAlign = 'left'; g.textBaseline = 'top'; wl.forEach(function (l, i) { g.font = (i === 0 ? '700 16px ' + FONT_UI : '400 14px ' + FONT_NUM); g.fillStyle = R.miss.length ? pal.compress : pal.ink; drawMathText(g, l, mar, y0 + i * 22); }); });
   }
   if (ok) {
     var gap = 14, cols = 4, cw = Math.floor((inner - gap * (cols - 1)) / cols);
-    add(24, function (g, y0) { g.font = '700 17px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText(tr('Diagramas de sólido libre'), mar, y0); });
+    add(24, function (g, y0) { g.font = '700 17px ' + FONT_UI; g.fillStyle = pal.ink; g.textAlign = 'left'; g.textBaseline = 'top'; drawMathText(g, tr('Diagramas de sólido libre'), mar, y0); });
     add(400 + gap, function (g, y0) { g.save(); g.translate(mar, y0); drawStructFBD(g, inner, 400, M, res, pal); g.strokeStyle = pal.gridMajor; g.strokeRect(0.5, 0.5, inner - 1, 399); g.restore(); });
     var rows = Math.ceil(M.nodes.length / cols), ch = Math.round(cw * 240 / 280);
     for (var r = 0; r < rows; r++) (function (r) { add(ch + gap, function (g, y0) { for (var i = r * cols; i < Math.min(M.nodes.length, (r + 1) * cols); i++) { var x = mar + (i - r * cols) * (cw + gap); g.save(); g.translate(x, y0); g.beginPath(); g.rect(0, 0, cw, ch); g.clip(); g.scale(cw / 280, ch / 240); drawNodeFBD(g, 280, 240, M, res, M.nodes[i].id, pal); g.restore(); g.strokeStyle = pal.gridMajor; g.strokeRect(x + 0.5, y0 + 0.5, cw - 1, ch - 1); } }); })(r);
     var brows = Math.ceil(M.bars.length / cols), bch = Math.round(cw * 140 / 280);
     for (var q = 0; q < brows; q++) (function (q) { add(bch + gap, function (g, y0) { for (var i = q * cols; i < Math.min(M.bars.length, (q + 1) * cols); i++) { var x = mar + (i - q * cols) * (cw + gap); g.save(); g.translate(x, y0); g.beginPath(); g.rect(0, 0, cw, bch); g.clip(); g.scale(cw / 280, bch / 140); drawBarFBD(g, 280, 140, M, res, M.bars[i], pal); g.restore(); g.strokeStyle = pal.gridMajor; g.strokeRect(x + 0.5, y0 + 0.5, cw - 1, bch - 1); } }); })(q);
   }
+  var box = makeAnnotationBox(mc, annotationGroups || [], 420);
+  if (box) add(box.height + 20, function (g, y0) { drawAnnotationBox(g, box, W - mar - box.width, y0 + 20, pal); });
   var H = y + mar, c = document.createElement('canvas'), k = 1.5; c.width = Math.round(W * k); c.height = Math.round(H * k);
   var g = c.getContext('2d'); g.scale(k, k); g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
   ops.forEach(function (o) { g.save(); o.fn(g, o.y); g.restore(); });
   await savePng(c, 'hoja-estatica.png');
 }
-$('btnPng').onclick = exportScheme; $('btnSheet').onclick = exportSheet;
+$('btnPng').onclick = function () { openAnnotationMenu('scheme'); }; $('btnSheet').onclick = function () { openAnnotationMenu('sheet'); };
 $('btnSave').onclick = function () { deliver('ejercicio-estatica.json', JSON.stringify(M, null, 1), 'json'); };
 $('btnOpen').onclick = function () { $('fileIn').click(); };
 $('fileIn').addEventListener('change', function () {
