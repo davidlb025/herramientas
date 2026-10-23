@@ -34,3 +34,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Herramienta privada: conservar solo en este equipo
+/analisis_funciones/

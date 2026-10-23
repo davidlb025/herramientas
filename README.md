@@ -7,6 +7,8 @@ y las aplicaciones, cada una en su propia carpeta.
 
 ## Contenido
 
+
+
 - `index.html`: hub autocontenido, con CSS, JavaScript, catálogo, fuentes,
   licencias, favicon y captura real de la aplicación incrustados.
 - `estatica_maquinas/index.html`: nueva versión del Taller de Estática facilitada
@@ -21,7 +23,7 @@ y las aplicaciones, cada una en su propia carpeta.
 - `.nojekyll`: sirve los archivos directamente en GitHub Pages.
 - `.gitignore`: excluye contexto local, pruebas, cachés, dependencias y paquetes.
 
-Las portadas son capturas reales incrustadas en el HTML, de **1891 × 909 píxeles**,
+Las portadas originales son capturas reales incrustadas en el HTML, de **1891 × 909 píxeles**,
 mostradas completas y con su proporción original. El Taller de Estática conserva
 la imagen PNG facilitada por David, sin recomprimir. La portada de Pizarra DT
 muestra su ejemplo integrado «Estudio de construcciones». La portada de Voz en off
@@ -74,3 +76,15 @@ La búsqueda, idiomas y catálogo funcionan en el navegador. Sin JavaScript se
 mantienen enlaces directos al Taller de Estática, Pizarra DT y Voz en off.
 
 El hub, el Taller de Estática, Pizarra DT y Voz en off incluyen el mismo favicon del portafolio incrustado en sus HTML. No requieren una carpeta assets ni un archivo de favicon externo.
+
+## Diédrico 3D
+
+`diedrico/index.html`: taller local de geometría descriptiva en español y catalán. Permite crear planos, rectas y sólidos; alinear elementos y compartir ejes de giro; orientar la geometría a VM/canto/punta respecto a planta, alzado y perfiles; y preparar láminas SVG/PNG o impresión/PDF con vistas seleccionables. Incluye rejilla espacial, coordenadas exactas, historial y guardado JSON. Su portada es una captura real de 1280 × 780 px, incrustada sin recorte en el catálogo. No necesita bibliotecas externas ni compilación. Consulta `diedrico/README.md` para los convenios y límites.
+
+También permite alargar rectas con centro o extremo fijo y editar contornos de planos: añadir, mover y eliminar vértices o aristas, con coordenadas locales y arrastre en VM. Estas formas se conservan al guardar y exportar.
+
+La exportación permite personalizar u ocultar el pie de página y muestra correspondencias geométricas con traslado de profundidad a perfiles mediante mitras de 45°.
+
+La presentación de lámina permite ocultar títulos y usar el modo parcial de rectas y planos: se eliminan interiores proyectados de otros planos, se amplían los huecos de los cruces y se mantienen puntos en los extremos interiores. La separación se regula en milímetros de papel.
+
+La galería de Diédrico 3D incluye cinco ejercicios sin sólidos: Triángulo, plano y recta (geometría aportada por el usuario), Recta secante a un plano, Bisagra de planos, Paralelos y transversal y Tres planos concurrentes. Los nombres y descripciones están disponibles en español y catalán.

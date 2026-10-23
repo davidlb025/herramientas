@@ -1,0 +1,33 @@
+'use strict';
+(function(){
+  const tr=s=>window.I18n?I18n.t(s):s;
+  function checkedDocument(next){G.validate(next);return next;}
+  function setEntity(next){const i=doc.entities.findIndex(e=>e.id===next.id);checkedDocument({...doc,entities:doc.entities.map((e,j)=>j===i?next:e)});mutate(()=>doc.entities[i]=next);}
+  function orient(kind){const e=editable();if(!e)return;try{const key=$('target-view').value,next=G.orientForProjection(e,key,kind,$('orient-use-axis').checked?doc.workAxis:null);setEntity(next);camera(G.CAMERAS[key],G.VIEW_NAMES[key]);toast('Geometría rotada. La cámara muestra la vista de destino.');}catch(err){toast(err.message);}}
+  $('orient-vm-btn').onclick=()=>orient('vm');$('orient-edge-btn').onclick=()=>orient('edge');
+  function refreshFeatures(e){
+    $('orient-group').hidden=!e||e.type==='point';if(e){const line=e.type==='line';$('orient-edge-btn').innerHTML=icon('rotate')+tr(line?'Rotar a punta':'Rotar a canto');$('orient-note').textContent=tr(line||G.planar(e)?'Modifica el objeto y abre la vista elegida.':'En sólidos se orienta su cara local XY. Modifica el objeto y abre la vista elegida.');
+      for(const id of ['orient-vm-btn','orient-edge-btn','align-btn'])$(id).disabled=e.locked;
+      const old=$('align-reference').value;$('align-reference').innerHTML='<option value="">'+tr('Elige una referencia')+'</option>'+doc.entities.filter(x=>x.id!==e.id).map(x=>`<option data-user-label value="${esc(x.id)}">${esc(x.name)}</option>`).join('');if(doc.entities.some(x=>x.id===old&&x.id!==e.id))$('align-reference').value=old;
+    }
+    $('orient-use-axis').disabled=!doc.workAxis;if(!doc.workAxis)$('orient-use-axis').checked=false;$('axis-controls').hidden=!doc.workAxis;
+    if(doc.workAxis){const a=doc.workAxis;$('common-axis-info').textContent=tr('Origen')+` (${a.origin.map(v=>num(v)).join('; ')}) · `+tr('Dirección')+` (${a.direction.map(v=>num(v,3)).join('; ')})`;$('axis-members').innerHTML=doc.entities.map(x=>`<label class="check"><input data-axis-member="${esc(x.id)}" type="checkbox" ${a.members.includes(x.id)?'checked':''}><span class="axis-member-name" title="${esc(x.name)}">${esc(x.name)}</span>${x.locked?icon('lock'):''}</label>`).join('');}
+    else $('common-axis-info').textContent=tr('Define un eje en Alineación y eje común.');
+  }
+  function align(){const e=editable(),ref=doc.entities.find(x=>x.id===$('align-reference').value);$('align-result').textContent='';if(!e||!ref){$('align-result').textContent=tr('Elige un elemento de referencia.');return;}
+    try{const kind=$('align-kind').value,orient=$('align-orientation').checked;let origin=[...ref.position],direction=G.rotate([1,0,0],ref.rotation),next=clone(e);
+      if(kind==='intersection'){if(!G.planar(e)||!G.planar(ref))throw Error('La intersección como eje necesita dos planos.');const line=G.planeIntersection(e,ref);if(!line)throw Error('Los planos son paralelos o coincidentes: no hay un eje único.');direction=line.direction;const near=G.mul(G.add(e.position,ref.position),.5);origin=G.add(line.origin,G.mul(direction,G.dot(G.sub(near,line.origin),direction)));}
+      else{if(kind==='normal'){if(!G.planar(ref))throw Error('La referencia debe ser un plano.');direction=G.planeFrame(ref).normal;}if(['x','y','z'].includes(kind))direction=[kind==='x'?1:0,kind==='y'?1:0,kind==='z'?1:0];next=G.alignedToAxis(e,origin,direction,orient);if(kind==='center')next.position=[...ref.position];}
+      const axis={origin,direction:G.unit(direction),label:'Eje común',members:[e.id,ref.id]};checkedDocument({...doc,entities:doc.entities.map(x=>x.id===e.id?next:x),workAxis:axis});mutate(()=>{doc.entities=doc.entities.map(x=>x.id===e.id?next:x);doc.workAxis=axis;});$('common-axis-group').open=true;$('align-result').textContent=tr(kind==='intersection'?'Eje definido en la intersección. Los planos no se han movido.':'Elemento alineado. Puedes girar ambos alrededor del eje común.');fit();
+    }catch(err){$('align-result').textContent=tr(err.message);}
+  }
+  $('align-btn').onclick=align;
+  $('align-kind').onchange=()=>{const kind=$('align-kind').value;$('align-orientation').disabled=kind==='intersection';$('align-note').textContent=tr(kind==='intersection'?'Usa la recta de intersección real. Conserva la posición de ambos planos.':kind==='center'?'Hace coincidir los centros. El eje pasa por la referencia.':['x','y','z'].includes(kind)?'Coloca los centros sobre una recta global que pasa por la referencia.':'Los planos contendrán el eje; las rectas quedarán sobre él. En sólidos se alinea el eje local Z.');};
+  $('axis-members').onchange=ev=>{const box=ev.target.closest('[data-axis-member]');if(!box||!doc.workAxis)return;mutate(()=>{const ids=new Set(doc.workAxis.members);box.checked?ids.add(box.dataset.axisMember):ids.delete(box.dataset.axisMember);doc.workAxis.members=[...ids];});};
+  $('axis-rotate-btn').onclick=()=>{const a=doc.workAxis,angle=Number($('axis-angle').value);if(!a)return;if($('axis-angle').value.trim()===''||!Number.isFinite(angle)||Math.abs(angle)>360){toast('Introduce un ángulo entre −360° y 360°.');return;}const members=doc.entities.filter(e=>a.members.includes(e.id));if(!members.length){toast('Marca los elementos que quieres girar.');return;}if(members.some(e=>e.locked)){toast('Hay elementos bloqueados en el conjunto. Desbloquéalos o desmárcalos.');return;}try{const next=doc.entities.map(e=>a.members.includes(e.id)?G.rotateEntity(e,a.direction,angle,a.origin):e);checkedDocument({...doc,entities:next});mutate(()=>doc.entities=next);toast('Conjunto girado sobre el eje común.');}catch(err){toast(err.message);}};
+  $('axis-clear-btn').onclick=()=>mutate(()=>delete doc.workAxis);
+  $('axis-line-btn').onclick=()=>{const a=doc.workAxis;if(!a)return;const center=G.add(a.origin,G.mul(a.direction,G.dot(G.sub(view.target,a.origin),a.direction)));addEntity(entity('line',{...G.lineFromPoints(G.add(center,G.mul(a.direction,-60)),G.add(center,G.mul(a.direction,60))),name:tr('Eje común'),color:COLORS[3]}));};
+  function draw(){if(!doc.workAxis)return;const a=doc.workAxis,center=G.add(a.origin,G.mul(a.direction,G.dot(G.sub(view.target,a.origin),a.direction))),extent=Math.min(3000,Math.max(80,Math.max(width,height)/view.scale));strokeWorld(G.add(center,G.mul(a.direction,-extent)),G.add(center,G.mul(a.direction,extent)),'#72578c',1,[7,4,1,4]);const q=toScreen(center);ctx.font='600 12px Segoe UI';ctx.fillStyle='#59436c';ctx.fillText(tr('Eje común'),q[0]+9,q[1]+17);}
+  window.Features={refresh:refreshFeatures,draw};refreshFeatures(selected());
+  window.addEventListener('diedrico-language',()=>{refresh();renderPreviews();if($('sheet-dialog').open)updateSheet();schedule();});
+})();
