@@ -58,7 +58,7 @@ V: explorar. G: mover. R: rotar. S: escalar. F: encuadrar. Escape: cancelar gest
 
 ## Verificación
 
-Ejecuta `node --test tests/*.test.cjs`. Las 67 pruebas cubren rotaciones e inversas, bases de cámara, VM/canto y longitud real, planos por puntos, intersecciones, oclusión analítica, figuras y cámaras, las 63 combinaciones de vistas, límites de escala, validación de datos y contraste de etiquetas. Incluyen contornos cóncavos, división y eliminación de aristas, conservación del plano soporte, longitudes con extremo fijo, traducciones y recuperación de contornos al guardar. Las pruebas de lámina verifican pies personalizados u ocultos, puntos homólogos, mitras a 45°, títulos ocultables y recorte parcial por interiores de planos, puntos en los extremos interiores, cruces, concavidad, oclusión y separación física en papel.
+Ejecuta `node --test tests/*.test.cjs`. Las 88 pruebas cubren rotaciones e inversas, bases de cámara, VM/canto y longitud real, planos por puntos, intersecciones, oclusión analítica, figuras y cámaras, las 63 combinaciones de vistas, límites de escala, validación de datos y contraste de etiquetas. Incluyen contornos cóncavos, división y eliminación de aristas, conservación del plano soporte, longitudes con extremo fijo, traducciones y recuperación de contornos al guardar. Las pruebas de lámina verifican pies personalizados u ocultos, puntos homólogos, mitras a 45°, títulos ocultables y recorte parcial por interiores de planos, puntos en los extremos interiores, cruces, concavidad, oclusión y separación física en papel.
 
 Comprobado además en navegador: creación, coordenadas, historial, arrastre de eje, VM/canto, descargas reales JSON/SVG/PNG, reapertura de proyecto y control de escala. Interfaz inspeccionada a 1440 × 900, 960 × 780 y 390 × 844. Las pruebas táctiles automatizadas no sustituyen una comprobación sobre dispositivo físico.
 
@@ -101,3 +101,28 @@ Activa **Rectas con trazos parciales** o **Planos con aristas parciales** para e
 Los extremos que quedan dentro de otro plano se representan con puntos. Una arista totalmente interior deja un punto en cada extremo; los vértices compartidos se dibujan una sola vez. Si ambos extremos coinciden en una vista de punta, se ve un único punto. Se conservan los tramos exteriores y se admiten varios intervalos de recorte en planos cóncavos.
 
 La opción de planos incluye planos de contorno editable y polígonos planos de aristas rectas. Se usa el interior proyectado del parche finito de cada plano, independientemente de su profundidad; no es una operación de intersección 3D. Los bordes y los planos de canto no generan interiores falsos. Los rangos visibles y ocultos calculados contra sólidos se conservan, y la separación se adapta a la escala para mantener sus milímetros en papel. La configuración se aplica a SVG, PNG e impresión/PDF. La geometría del proyecto sigue disponible para construcciones y medidas.
+
+## Generar múltiples láminas
+
+Junto a **Guardar**, o desde **Lámina y exportar**, **Generar múltiples** permite crear entre 1 y 100 ejercicios aleatorios. Indica mínimos y máximos inclusivos del total de elementos, planos, rectas y sólidos 3D (hasta 120 elementos por ejercicio). El total es la suma de las tres categorías; 0–0 excluye una. Los rangos incompatibles se rechazan antes de generar.
+
+Cada lámina varía posiciones y orientaciones. Si la escena contiene elementos de una categoría, se reutilizan como plantillas sus medidas, colores y contornos; los planos incluyen también circunferencias y polígonos planos. Si falta una categoría, se usan figuras predeterminadas; los sólidos pueden ser ortoedros, prismas, pirámides, cilindros o conos. La escena abierta y su historial se conservan.
+
+Se utilizan las vistas, escala, formato, trazos parciales, nombres, colores, cuadrícula, correspondencias y pie configurados en **Lámina y exportar**. **Configurar lámina** abre esos ajustes. El lote exporta todos sus elementos, independientemente del filtro de selección individual. Si una escala fija no cabe, se indica la lámina afectada para corregir el ajuste, sin cambiar automáticamente la escala.
+
+Al pulsar **Generar** se prepara el lote y se muestra la vista previa, sin iniciar descargas. Después puedes elegir **ZIP SVG**, **ZIP PNG** (8 píxeles por milímetro) o **ZIP JSON** con los proyectos editables. Cada archivo ZIP contiene únicamente los archivos del formato elegido, con la misma numeración y las mismas escenas. Puedes descargar varios formatos del mismo lote. **Imprimir / PDF** imprime una lámina por página con el mismo formato. Tanto la generación como la preparación de un ZIP se pueden cancelar; cancelar una exportación conserva las láminas. Funciona sin conexión y sin dependencias externas.
+
+
+### Cruces y conexión
+
+Activa **Forzar cruces y un único conjunto conectado** para exigir al menos dos elementos por lámina y formar una red de intersecciones en 3D. Cada elemento cruza al menos a otro y existe un camino entre cualesquiera dos: una cadena T1–T2–T3–T4 cumple la condición; dos parejas T1–T2 y T3–T4 separadas no. No se exige que todos crucen directamente con todos.
+
+Las intersecciones se comprueban contra segmentos y superficies finitos, incluyendo contornos cóncavos, polígonos, círculos y sólidos. Coincidir en una proyección sin compartir un punto espacial no cuenta. Se conservan dimensiones, colores y contornos de las plantillas y se modifican sus posiciones y orientaciones para conectar el conjunto. Si las dimensiones impiden una conexión válida, la generación muestra un error.
+
+### Recta infinita
+
+Activa **Recta infinita** para prolongar cada recta hasta que sus extremos sobresalgan al menos **8 mm de papel en todas las vistas elegidas**. Se calcula una única pareja de extremos A y B en 3D: sus proyecciones coinciden exactamente con las líneas de correspondencia, incluidas las de planta, alzado y perfiles. Se conserva el tramo más corto compatible con todos los márgenes; por el acortamiento de la proyección, algunas vistas pueden mostrar más de 8 mm. Con trazos parciales se añade la separación configurada antes de esos 8 mm visibles. Se usan los contornos reales, también los cóncavos, y se ajustan ambos extremos por separado. SVG, PNG y proyectos JSON comparten las mismas coordenadas finales. Las rectas finitas conservan sus extremos originales. La prolongación respeta el límite de 10000 mm; si una vista de punta o la combinación de vistas y separación impide el margen, se muestra un error para ajustar la configuración.
+
+Las pruebas comprueban cadenas y parejas desconectadas, falsos cruces por proyección, parches finitos y concavidades, todas las clases de figuras, rangos compatibles con la conexión, conservación de plantillas, prolongaciones en las seis vistas y bytes binarios del ZIP PNG. La comprobación en navegador verifica generación sin descargas, las tres descargas independientes, cancelación y conservación de opciones y escenas.
+
+Las pruebas de extremos verifican la misma pareja A/B en las seis vistas, la unión exacta de sus correspondencias, márgenes de 8 mm con varias escalas y separaciones, el ajuste mínimo asimétrico y la coincidencia entre el JSON y la geometría dibujada.

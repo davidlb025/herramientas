@@ -44,7 +44,7 @@
   const VIEW_NAMES={front:'Alzado · frente',top:'Planta · arriba',right:'Perfil derecho',left:'Perfil izquierdo',back:'Alzado posterior',bottom:'Planta inferior'};
   function project(p,b) {return [dot(p,b.right),-dot(p,b.up),dot(p,b.d)];}
   function bounds(entities,b=CAMERAS.iso) {
-    const ps=entities.filter(e=>e.visible).flatMap(e=>mesh(e).vertices).map(p=>project(p,b));
+    const ps=projectedMeshes(entities,b).flatMap(m=>m.p);
     if(!ps.length)return {min:[-50,-50,-50],max:[50,50,50],center:[0,0,0],width:100,height:100};
     const min=[0,1,2].map(i=>Math.min(...ps.map(p=>p[i]))),max=[0,1,2].map(i=>Math.max(...ps.map(p=>p[i])));
     return {min,max,center:mul(add(min,max),.5),width:Math.max(1,max[0]-min[0]),height:Math.max(1,max[1]-min[1])};
@@ -63,10 +63,42 @@
     if(u< -EPS||v< -EPS||u+v>1+EPS)return null;return u*a[2]+v*b[2]+(1-u-v)*c[2];
   }
   function cross2(a,b){return a[0]*b[1]-a[1]*b[0];}
+  function convexHull(points){
+    const sorted=points.map(p=>p.slice(0,2)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]),unique=sorted.filter((p,i)=>!i||length(sub(p,sorted[i-1]))>EPS);
+    const half=ps=>{const out=[];for(const p of ps){while(out.length>1&&cross2(sub(out.at(-1),out.at(-2)),sub(p,out.at(-1)))<=EPS)out.pop();out.push(p);}return out;};
+    if(unique.length<3)return unique;return[...half(unique).slice(0,-1),...half([...unique].reverse()).slice(0,-1)];
+  }
+  function projectedMeshes(entities,b){return entities.filter(e=>e.visible).map(e=>{const m=mesh(e);return{...m,p:m.vertices.map(v=>project(v,b))};});}
+  // Find the shortest single 3D segment whose two endpoints clear every selected
+  // projected contour. All views then use exactly the same spatial endpoints.
+  function fitInfiniteLines(entities,views=['front','top','right'],margin=8){
+    if(!entities.some(e=>e.visible&&e.type==='line'&&e.infiniteLine))return entities;
+    const projections=views.map(key=>{const camera=typeof key==='string'?CAMERAS[key]:key;if(!camera)return null;return{camera,contours:projectedMeshes(entities,camera).map(m=>({entity:m.entity,poly:planar(m.entity)||m.entity.type==='line'?m.p:convexHull(m.p)}))};}).filter(Boolean);
+    return entities.map(e=>{
+      if(e.type!=='line'||!e.infiniteLine||!e.visible)return e;
+      const direction=rotate([1,0,0],e.rotation);let lo=Infinity,hi=-Infinity;
+      for(const {camera,contours}of projections){
+        const d=project(direction,camera),len=Math.hypot(d[0],d[1]);if(len<EPS)throw Error('La recta se ve de punta en una vista. Cambia su orientación o las vistas.');
+        const origin=project(e.position,camera),unit=[d[0]/len,d[1]/len],hits=[];
+        for(const other of contours){
+          if(other.entity.id===e.id)continue;const poly=other.poly,count=other.entity.type==='line'?1:poly.length;
+          for(let i=0;i<count;i++){
+            const a=poly[i],c=poly[(i+1)%poly.length],edge=sub(c,a),q=sub(a,origin),den=cross2(unit,edge);
+            if(Math.abs(den)>EPS){const t=cross2(q,edge)/den,u=cross2(q,unit)/den;if(u>=-EPS&&u<=1+EPS)hits.push(t);}
+            else if(Math.abs(cross2(q,unit))<EPS)hits.push(dot(q.slice(0,2),unit),dot(sub(c,origin).slice(0,2),unit));
+          }
+        }
+        if(hits.length){lo=Math.min(lo,(Math.min(...hits)-margin)/len);hi=Math.max(hi,(Math.max(...hits)+margin)/len);}
+      }
+      if(!Number.isFinite(lo)||!Number.isFinite(hi))return e;
+      const position=add(e.position,mul(direction,(lo+hi)/2)),size=[hi-lo,...e.size.slice(1)];
+      if(size[0]>10000||position.some(v=>Math.abs(v)>10000))throw Error('La recta prolongada supera 10000 mm. Reduce las dimensiones o cambia las vistas.');
+      return{...e,position,size};
+    });
+  }
   function crossingT(a,b,c,d) {const ab=sub(b,a),cd=sub(d,c),den=cross2(ab,cd);if(Math.abs(den)<EPS)return null;const t=cross2(sub(c,a),cd)/den,u=cross2(sub(c,a),ab)/den;return t>EPS&&t<1-EPS&&u>=-EPS&&u<=1+EPS?t:null;}
   function projectedScene(entities,b,{occlude=true}={}) {
-    const ms=entities.filter(e=>e.visible).map(mesh),triangles=[],segments=[],points=[];
-    const pmeshes=ms.map(m=>({...m,p:m.vertices.map(v=>project(v,b))}));
+    const triangles=[],segments=[],points=[],pmeshes=projectedMeshes(entities,b);
     for(const m of pmeshes) if(!planar(m.entity))for(const face of m.faces)for(let i=1;i<face.length-1;i++)triangles.push([m.p[face[0]],m.p[face[i]],m.p[face[i+1]]]);
     for(const m of pmeshes) {
       const ee=[...m.edges];
@@ -150,12 +182,12 @@
       for(const key of ['position','rotation','size'])if(!Array.isArray(e[key])||e[key].length!==3||e[key].some(n=>typeof n!=='number'||!Number.isFinite(n)||Math.abs(n)>10000)||(key==='size'&&e[key].some(n=>n<.1)))throw Error('Las coordenadas deben ser finitas y las dimensiones positivas (0,1–10000 mm).');
       if(!Number.isInteger(e.sides)||e.sides<3||e.sides>24)throw Error('El número de lados debe estar entre 3 y 24.');
       if(e.outline!==undefined){if(e.type!=='plane'||!Array.isArray(e.outline)||e.outline.some(p=>!Array.isArray(p)||p.length!==2||p.some(v=>typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>1e5)))throw Error('El contorno contiene datos no válidos.');validateOutline(planeOutline(e));}
-      return{id:e.id,type:e.type,name:e.name,color:e.color,position:[...e.position],rotation:[...e.rotation],size:[...e.size],sides:e.sides,visible:e.visible!==false,locked:e.locked===true,...(e.outline?{outline:e.outline.map(p=>[...p])}:{})};
+      return{id:e.id,type:e.type,name:e.name,color:e.color,position:[...e.position],rotation:[...e.rotation],size:[...e.size],sides:e.sides,visible:e.visible!==false,locked:e.locked===true,...(e.outline?{outline:e.outline.map(p=>[...p])}:{}),...(e.type==='line'&&e.infiniteLine===true?{infiniteLine:true}:{})};
     });
     let workAxis=null;if(input.workAxis!=null){const a=input.workAxis;for(const key of ['origin','direction'])if(!Array.isArray(a[key])||a[key].length!==3||a[key].some(v=>typeof v!=='number'||!Number.isFinite(v)||Math.abs(v)>10000))throw Error('El eje común contiene coordenadas no válidas.');if(length(a.direction)<EPS)throw Error('El eje común necesita una dirección.');workAxis={origin:[...a.origin],direction:unit(a.direction),label:String(a.label||'Eje común').slice(0,100),members:Array.isArray(a.members)?[...new Set(a.members.filter(id=>ids.has(id)))]:[]};}
     return{format:'diedrico-web',version:1,name:String(input.name||'Sin título').slice(0,100),entities,grid:[1,2,5,10,20,50].includes(input.grid)?input.grid:10,...(workAxis?{workAxis}:{})};
   }
   const api={EPS,rad,add,sub,mul,dot,cross,length,unit,lerp,contrast,textColor,rotate,inverseRotate,world,mesh,basis,CAMERAS,VIEW_NAMES,project,bounds,planar,planeFrame,elementCamera,depthAt,projectedScene,linePlane,planeIntersection,planeFromPoints,lineFromPoints,eulerFromFrame,axisRotate,rotateEntity,alignVector,alignedToAxis,axisAngleForProjection,orientForProjection,validate};
-  Object.assign(api,{resizeLine,planeOutline,validateOutline,withPlaneOutline,editPlane,planeScreenDelta});
+  Object.assign(api,{resizeLine,planeOutline,validateOutline,withPlaneOutline,editPlane,planeScreenDelta,projectedMeshes,fitInfiniteLines});
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Geo=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

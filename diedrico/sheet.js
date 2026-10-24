@@ -80,17 +80,21 @@
   function create(doc,options){
     const G=root.Geo,{format='a4',scale='auto',selected=null,onlySelected=false,grid=false,projectors=false,showFooter=true,footerDetails=true,showViewTitles=true}=options,header=showViewTitles?7:0;
     const placements={right:[0,1],front:[1,1],left:[2,1],back:[3,1],top:[1,2],bottom:[1,0]},views=[...new Set(options.views||[])].filter(v=>v in placements);
-    const entities=doc.entities.filter(e=>e.visible&&(!onlySelected||e.id===selected)),paper=format==='a3'?[420,297]:[297,210];
-    if(!views.length)return{error:t('Selecciona al menos una vista.')};if(!entities.length)return{error:t('No hay elementos visibles para esta lámina.')};
+    const inputEntities=doc.entities.filter(e=>e.visible&&(!onlySelected||e.id===selected)),paper=format==='a3'?[420,297]:[297,210],lineMargin=options._lineMargin??8;
+    if(!views.length)return{error:t('Selecciona al menos una vista.')};if(!inputEntities.length)return{error:t('No hay elementos visibles para esta lámina.')};
+    let entities;try{entities=G.fitInfiniteLines(inputEntities,views,lineMargin);}catch(error){return{error:t(error.message)};}
     const scenes={},bounds={},cols={},rows={};
     const title=String(options.footerTitle??doc.name).replace(/\s+/g,' ').trim().slice(0,100),note=String(options.footerNote??defaultFooterNote()).replace(/\s+/g,' ').trim().slice(0,180),footerWidth=paper[0]-20-(footerDetails?76:0),titleLines=wrapText(title,footerWidth,4.2),noteLines=wrapText(note,footerWidth,2.6),lastBaseline=noteLines.length?6+titleLines.length*5.3+(noteLines.length-1)*3.8:titleLines.length?6+(titleLines.length-1)*5.3:0,footerY=paper[1]-10-Math.max(14,lastBaseline+1);
-    for(const key of views){bounds[key]=G.bounds(entities,G.CAMERAS[key]);scenes[key]=G.projectedScene(entities,G.CAMERAS[key]);const[c,r]=placements[key];cols[c]=Math.max(cols[c]||0,bounds[key].width);rows[r]=Math.max(rows[r]||0,bounds[key].height);}
+    for(const key of views){bounds[key]=G.bounds(entities,G.CAMERAS[key]);const[c,r]=placements[key];cols[c]=Math.max(cols[c]||0,bounds[key].width);rows[r]=Math.max(rows[r]||0,bounds[key].height);}
     const cmin=Math.min(...Object.keys(cols).map(Number)),cmax=Math.max(...Object.keys(cols).map(Number)),rmin=Math.min(...Object.keys(rows).map(Number)),rmax=Math.max(...Object.keys(rows).map(Number));
     for(let c=cmin;c<=cmax;c++)if(!cols[c])cols[c]=1;for(let r=rmin;r<=rmax;r++)if(!rows[r])rows[r]=1;
     const nc=cmax-cmin+1,nr=rmax-rmin+1,padX=9,padY=7+header,gap=5,W=paper[0]-20,bodyTop=10,H=(showFooter?footerY-7:paper[1]-10)-bodyTop;
     const sumX=Object.values(cols).reduce((a,b)=>a+b,0),sumY=Object.values(rows).reduce((a,b)=>a+b,0);
     const auto=Math.min((W-nc*padX-gap*(nc-1))/sumX,(H-nr*padY-gap*(nr-1))/sumY,5),k=scale==='auto'?auto:Number(scale);
     if(!Number.isFinite(k)||k<=0)return{error:t('Elige una escala válida.')};
+    const requestedGap=Number(options.partialGap??4),overhang=8+(options.partialLines?(Number.isFinite(requestedGap)?Math.max(0,Math.min(20,requestedGap)):4):0);
+    if(entities.some(e=>e.infiniteLine)&&Math.abs(lineMargin*k-overhang)>.02){if((options._linePass||0)>=64)return{error:t('No caben extremos correspondientes con 8 mm de margen. Reduce la separación en cruces o elige menos vistas.')};return create(doc,{...options,_lineMargin:overhang/k,_linePass:(options._linePass||0)+1});}
+    for(const key of views)scenes[key]=G.projectedScene(entities,G.CAMERAS[key]);
     const totalW=sumX*k+nc*padX+gap*(nc-1),totalH=sumY*k+nr*padY+gap*(nr-1),fits=totalW<=W+.01&&totalH<=H+.01&&k>0;
     const cw=Object.fromEntries(Object.entries(cols).map(([c,w])=>[c,w*k+padX])),rh=Object.fromEntries(Object.entries(rows).map(([r,h])=>[r,h*k+padY]));
     let x=10+(W-totalW)/2,y=bodyTop+(H-totalH)/2;const xs={},ys={};for(let c=cmin;c<=cmax;c++){xs[c]=x;x+=cw[c]+gap;}for(let r=rmin;r<=rmax;r++){ys[r]=y;y+=rh[r]+gap;}
@@ -107,7 +111,8 @@
     const label=scale==='auto'?`${t('Ajustada')} · ${fmt(k)}:1`:(k>=1?`${fmt(k)}:1`:`1:${fmt(1/k)}`);
     let footer='';if(showFooter){footer=`<g data-purpose="footer"><path d="M10 ${n(footerY)}H${paper[0]-10}" stroke="#647b69" stroke-width=".3"/>`;titleLines.forEach((line,i)=>footer+=`<text x="10" y="${n(footerY+6+i*5.3)}" font-size="4.2" font-weight="600" fill="#203d35">${esc(line)}</text>`);noteLines.forEach((line,i)=>footer+=`<text x="10" y="${n(footerY+6+titleLines.length*5.3+i*3.8)}" font-size="2.6" fill="#526657">${esc(line)}</text>`);if(footerDetails)footer+=`<text x="${paper[0]-10}" y="${n(footerY+6)}" text-anchor="end" font-size="3" fill="#203d35">${t('Escala')} ${label}</text><text x="${paper[0]-10}" y="${n(footerY+12)}" text-anchor="end" font-size="2.5" fill="#526657">${format.toUpperCase()} ${t('horizontal')} · ${entities.length} ${t(entities.length===1?'elemento':'elementos')}</text>`;footer+='</g>';}
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${paper[0]}mm" height="${paper[1]}mm" viewBox="0 0 ${paper[0]} ${paper[1]}" role="img" aria-label="${t('Lámina de proyecciones ortogonales')}"><title>${esc(doc.name)} · ${t('Proyecciones ortogonales')}</title><desc>${t('Sistema europeo')}, ${t('Primer diedro')}. ${t('Medidas en milímetros.')} ${views.map(v=>t(G.VIEW_NAMES[v])).join(', ')}. ${t('Curvas discretizadas.')}</desc><defs>${defs}</defs><rect width="${paper[0]}" height="${paper[1]}" fill="#fff"/><g font-family="Segoe UI,Arial,sans-serif">${content}${footer}</g></svg>`;
-    return{svg,paper,scale:k,fits,layout:{cells,body:{x:10,y:bodyTop,w:W,h:H}},guides,warning:fits?'':t('La geometría no cabe a esta escala. Elige «Ajustar al papel» o una escala menor.')};
+    const prepared=new Map(entities.map(e=>[e.id,e])),document={...doc,entities:doc.entities.map(e=>prepared.get(e.id)||e)};
+    return{svg,paper,scale:k,fits,document,layout:{cells,body:{x:10,y:bodyTop,w:W,h:H}},guides,warning:fits?'':t('La geometría no cabe a esta escala. Elige «Ajustar al papel» o una escala menor.')};
   }
   root.Sheet={create,drawing,esc,defaultFooterNote,correspondenceGuides,partialSegments,partialGeometry};
 })(globalThis);
