@@ -76,6 +76,14 @@
     'La recta se ve de punta en una vista. Cambia su orientación o las vistas.':'La recta es veu de punta en una vista. Canvia’n l’orientació o les vistes.',
     'No caben extremos correspondientes con 8 mm de margen. Reduce la separación en cruces o elige menos vistas.':'No hi caben extrems corresponents amb 8 mm de marge. Redueix la separació als encreuaments o tria menys vistes.'
   });
+  Object.assign(CA,{
+    'Marcos de las vistas':'Marcs de les vistes',
+    "Letras de puntos (A, A')":"Lletres dels punts (A, A')",
+    "A en planta, A' en alzado; la misma letra identifica el mismo punto.":"A en planta, A' en alçat; la mateixa lletra identifica el mateix punt.",
+    'Vértices fuera de otros planos':'Vèrtexs fora dels altres plans',
+    'Ningún vértice queda dentro de la proyección de otro plano en las vistas elegidas. Se permiten cruces de aristas.':'Cap vèrtex queda dins de la projecció d’un altre pla a les vistes triades. Es permeten encreuaments d’arestes.',
+    'No se ha podido generar sin vértices dentro de otros planos. Reduce los elementos, elige menos vistas o desactiva la restricción.':'No s’ha pogut generar sense vèrtexs dins dels altres plans. Redueix els elements, tria menys vistes o desactiva la restricció.'
+  });
   function translate(text,language='ca'){
     if(language!=='ca')return text;const raw=String(text),s=raw.trim(),before=raw.slice(0,raw.indexOf(s)),after=raw.slice(raw.indexOf(s)+s.length);if(!s)return raw;
     let out=CA[s];if(out===undefined){if(s.endsWith(' añadido'))out=s.slice(0,-8)+' afegit';else if(s.endsWith(' · bloqueado'))out=translate(s.slice(0,-12),language)+' · bloquejat';else if(s.startsWith('Verdadera magnitud de '))out='Veritable magnitud de '+s.slice('Verdadera magnitud de '.length);else if(s.startsWith('Longitud real de '))out='Longitud real de '+s.slice(17);else if(s.startsWith('Ver ')&&s.endsWith(' de canto'))out='Mostra '+s.slice(4,-9)+' de cantell';else if(s.startsWith('Ver ')&&s.endsWith(' de punta'))out='Mostra '+s.slice(4,-9)+' de punta';else if(s.startsWith('De canto · '))out='De cantell · '+s.slice(11);else if(s.startsWith('Posición '))out='Posició '+s.slice(9);else if(s.startsWith('Rotación '))out='Rotació '+s.slice(9);else if(s.startsWith('Dimensión '))out='Dimensió '+s.slice(10);else for(const[a,b]of PREFIXES)if(s.startsWith(a)){out=b+(a.startsWith('No se pudo')?translate(s.slice(a.length),language):s.slice(a.length));break;}}

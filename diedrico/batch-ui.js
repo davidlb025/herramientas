@@ -2,7 +2,7 @@
 (()=>{
   let running=false,cancelled=false,results=[],archives={},resultFormat='a4',page=0,archiveName='';
   const dialog=$('batch-dialog'),t=I18n.t,downloadIds=['batch-download-svg','batch-download-png','batch-download-json','batch-print'];
-  function settings(){return{quantity:$('batch-quantity').valueAsNumber,connected:$('batch-connected').checked,infiniteLines:$('batch-infinite-lines').checked,...Object.fromEntries(['total','planes','lines','solids'].map(key=>[key,['min','max'].map(end=>$(`batch-${key}-${end}`).valueAsNumber)]))};}
+  function settings(){return{quantity:$('batch-quantity').valueAsNumber,connected:$('batch-connected').checked,infiniteLines:$('batch-infinite-lines').checked,avoidInteriorVertices:$('batch-outside-vertices').checked,...Object.fromEntries(['total','planes','lines','solids'].map(key=>[key,['min','max'].map(end=>$(`batch-${key}-${end}`).valueAsNumber)]))};}
   function summary(){
     refreshSheetFooter();const options=sheetOptions();
     $('batch-config').textContent=[options.format.toUpperCase(),$('sheet-scale').selectedOptions[0].textContent,options.views.map(key=>t(G.VIEW_NAMES[key])).join(', ')||t('Selecciona al menos una vista.')].join(' · ');
@@ -70,6 +70,7 @@
         const sheet=Sheet.create(generated.document,{...options,footerTitle:footerTitleCustom?options.footerTitle:generated.document.name});
         if(sheet.error||!sheet.fits)throw Error(`${t('Lámina')} ${index}: ${sheet.error||sheet.warning||t('La lámina no cabe a la escala elegida.')} ${t('Revisa la escala o las dimensiones antes de generar el lote.')}`);
         generated.document=G.validate(sheet.document);
+        if(config.avoidInteriorVertices&&!BatchGeometry.verticesOutsidePlanes(generated.document.entities,options.views))throw Error(`${t('Lámina')} ${index}: ${t(BatchGeometry.vertexError)}`);
         pending.push({...generated,sheet,name:base.slice(0,80)+'-'+String(index).padStart(3,'0')});
         $('batch-progress').value=index;$('batch-status').textContent=`${t('Generando láminas…')} ${index} / ${config.quantity}`;
       }

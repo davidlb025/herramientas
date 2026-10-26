@@ -38,12 +38,14 @@
       const e=template?copy(template):{type,color:colors[entities.length%colors.length],size:key==='planes'?[80,60,1]:key==='lines'?[80,1,1]:[40,40,50],sides:integer(3,8)};
       Object.assign(e,{id:`batch-${index}-${entities.length}-${integer(0,0xffffffff).toString(36)}`,name:translate(names[type]||{circle:'Circunferencia',polygon:'Polígono'}[type])+' '+sequence[type],position:[integer(-55,55),integer(-45,45),integer(15,85)],rotation:[integer(-70,70),integer(-70,70),integer(-180,180)],visible:true,locked:false});
       delete e.infiniteLine;
-      if((settings.infiniteLines||settings.prepareInfinite)&&e.type==='line')for(let attempt=0;attempt<24&&!BG.readableLine(e,settings.views||['front','top','right']);attempt++)e.rotation=e.rotation.map((angle,j)=>angle+[11.173,23.417,37.129][j]);
+      if((settings.infiniteLines||settings.prepareInfinite)&&e.type==='line')for(let attempt=0;attempt<24&&!BG.readableLine(e,settings.views||['front','top']);attempt++)e.rotation=e.rotation.map((angle,j)=>angle+[11.173,23.417,37.129][j]);
       entities.push(e);
     }
-    let geometry=settings.connected?BG.connect(entities,random,settings.infiniteLines||settings.prepareInfinite?settings.views||['front','top','right']:[]):entities;
-    if(settings.infiniteLines)geometry=BG.extendLines(geometry,settings.views);
+    const views=settings.views||['front','top'];
+    let geometry=settings.connected?BG.connect(entities,random,settings.infiniteLines||settings.prepareInfinite?views:[],{avoidInteriorVertices:settings.avoidInteriorVertices,views}):settings.avoidInteriorVertices?BG.separateVertices(entities,random,views):entities;
+    if(settings.infiniteLines)geometry=BG.extendLines(geometry,views);
     const suffix=' · '+String(index).padStart(3,'0'),document=G.validate({format:'diedrico-web',version:1,name:String(source.name).slice(0,100-suffix.length)+suffix,entities:geometry,grid:source.grid});
+    if(settings.avoidInteriorVertices&&!BG.verticesOutsidePlanes(document.entities,views))throw Error(BG.vertexError);
     return {document,counts:chosen};
   }
   // ZIP (stored entries, UTF-8 names): a single download, including when used offline.

@@ -3,10 +3,10 @@
   const G=typeof module!=='undefined'&&module.exports?require('./geometry.js'):root.Geo,EPS=1e-6;
   const mean=points=>G.mul(points.reduce((a,p)=>G.add(a,p),[0,0,0]),1/points.length);
   const cross2=(a,b)=>a[0]*b[1]-a[1]*b[0];
-  function inside(p,polygon){
+  function inside(p,polygon,includeBoundary=true){
     let hit=false;for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
       const a=polygon[j],b=polygon[i],v=G.sub(b,a),q=G.sub(p,a),length=G.length(v);
-      if(length>EPS&&Math.abs(cross2(v,q))<=EPS*length&&G.dot(q,v)>=-EPS&&G.dot(q,v)<=G.dot(v,v)+EPS)return true;
+      if(length>EPS&&Math.abs(cross2(v,q))<=EPS*length&&G.dot(q,v)>=-EPS&&G.dot(q,v)<=G.dot(v,v)+EPS)return includeBoundary;
       if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])hit=!hit;
     }return hit;
   }
@@ -69,20 +69,58 @@
     return!line||!plane||Math.abs(G.dot(G.rotate([1,0,0],line.rotation),G.planeFrame(plane).normal))>.08;
   }
   function readableLine(e,views=[]){return e.type!=='line'||views.every(key=>{const c=G.CAMERAS[key];if(!c)return true;const d=G.rotate([1,0,0],e.rotation);return Math.hypot(G.dot(d,c.right),G.dot(d,c.up))>.35;});}
-  function connect(entities,random=Math.random,views=[]){
+  const vertexError='No se ha podido generar sin vértices dentro de otros planos. Reduce los elementos, elige menos vistas o desactiva la restricción.';
+  function verticesOutsidePlanes(entities,views=['front','top'],candidateId=null){
+    const meshes=entities.filter(e=>e.visible).map(G.mesh);
+    for(const key of views){
+      const camera=G.CAMERAS[key];if(!camera)continue;
+      const projected=meshes.map(m=>({...m,p:m.vertices.map(p=>G.project(p,camera).slice(0,2))}));
+      const masks=projected.filter(m=>G.planar(m.entity)).map(m=>{
+        const poly=m.p,area=poly.reduce((sum,p,i)=>sum+cross2(G.sub(p,poly[0]),G.sub(poly[(i+1)%poly.length],poly[0])),0);
+        return{...m,area,min:[0,1].map(i=>Math.min(...poly.map(p=>p[i]))),max:[0,1].map(i=>Math.max(...poly.map(p=>p[i])))};
+      }).filter(m=>Math.abs(m.area)>EPS);
+      for(const m of projected)for(const mask of masks){
+        if(m.entity.id===mask.entity.id||candidateId!==null&&m.entity.id!==candidateId&&mask.entity.id!==candidateId)continue;
+        if(m.p.some(p=>p[0]>mask.min[0]-EPS&&p[0]<mask.max[0]+EPS&&p[1]>mask.min[1]-EPS&&p[1]<mask.max[1]+EPS&&inside(p,mask.p,false)))return false;
+      }
+    }
+    return true;
+  }
+  function separateVertices(entities,random=Math.random,views=['front','top']){
+    const placed=[];
+    for(const original of entities){
+      const e=JSON.parse(JSON.stringify(original)),span=Math.max(120,...G.mesh(e).vertices.map(p=>G.length(G.sub(p,e.position))*2));let success=false;
+      for(let attempt=0;attempt<256&&!success;attempt++){
+        if(attempt){e.rotation=[(random()-.5)*160,(random()-.5)*160,(random()-.5)*360];e.position=original.position.map(p=>Math.max(-9900,Math.min(9900,p+(random()-.5)*span*(1+Math.floor(attempt/24)))));}
+        success=verticesOutsidePlanes([...placed,e],views,e.id);
+      }
+      if(!success)throw Error(vertexError);placed.push(e);
+    }
+    return placed;
+  }
+  function connect(entities,random=Math.random,views=[],options={}){
+    // Restart the placement when an earlier choice leaves no valid continuation.
+    if(options.avoidInteriorVertices&&!options.singleAttempt){
+      for(let attempt=0;attempt<32;attempt++){
+        const trial=entities.map(e=>({...e,rotation:attempt?[(random()-.5)*160,(random()-.5)*160,(random()-.5)*360]:[...e.rotation]}));
+        try{return connect(trial,random,views,{...options,singleAttempt:true});}catch(error){if(error.message!==vertexError)throw error;}
+      }
+      throw Error(vertexError);
+    }
     const placed=entities.map(e=>JSON.parse(JSON.stringify(e)));
     if(placed.length<2)throw Error('Para conectar los elementos hacen falta al menos 2 por lámina.');
     for(let i=1;i<placed.length;i++){
       const e=placed[i],rotation=[...e.rotation];let success=false;
-      for(let attempt=0;attempt<24&&!success;attempt++){
+      for(let attempt=0;attempt<(options.avoidInteriorVertices?192:24)&&!success;attempt++){
         const parent=placed[attempt===0?i-1:Math.floor(random()*i)];e.rotation=rotation.map((angle,j)=>angle+attempt*[11.173,23.417,37.129][j]);
         e.position=G.add(e.position,G.sub(anchor(parent,random),anchor(e,random)));
         success=transverse(parent,e)&&readableLine(e,views)&&intersects(parent,e);
+        if(success&&options.avoidInteriorVertices)success=verticesOutsidePlanes(placed.slice(0,i+1),options.views||['front','top'],e.id);
       }
-      if(!success)throw Error('No se ha podido conectar la geometría con estas dimensiones.');
+      if(!success)throw Error(options.avoidInteriorVertices?vertexError:'No se ha podido conectar la geometría con estas dimensiones.');
     }
     return placed;
   }
   function extendLines(entities,views=['front','top','right'],margin=8){return G.fitInfiniteLines(entities.map(e=>({...JSON.parse(JSON.stringify(e)),...(e.type==='line'?{infiniteLine:true}:{})})),views,margin);}
-  const api={intersects,graph,connect,extendLines,readableLine};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.BatchGeometry=api;
+  const api={intersects,graph,connect,extendLines,readableLine,verticesOutsidePlanes,separateVertices,vertexError};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.BatchGeometry=api;
 })(globalThis);

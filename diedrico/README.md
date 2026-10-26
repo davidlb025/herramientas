@@ -35,7 +35,9 @@ La lista permite ocultar y bloquear elementos. Se puede duplicar, eliminar, desh
 
 ## Láminas y archivos
 
-**Lámina y exportar** permite elegir cualquiera de las seis vistas, mostrar u ocultar aristas ocultas, nombres, colores, cuadrícula y correspondencias, o limitar la salida al elemento seleccionado. Se puede elegir A4 o A3 horizontal, escala fija o ajuste al papel. Una escala que no cabe bloquea la exportación y explica cómo corregirla.
+**Lámina y exportar** comienza con **Alzado · frente** y **Planta · arriba**, con letras, rectas y planos parciales a 6 mm, sin títulos de vistas, pie de página ni nombres de objetos. Permite elegir cualquiera de las seis vistas, mostrar u ocultar aristas ocultas, nombres, colores, cuadrícula y correspondencias, o limitar la salida al elemento seleccionado. Se puede elegir A4 o A3 horizontal, escala fija o ajuste al papel. Una escala que no cabe bloquea la exportación y explica cómo corregirla.
+
+**Letras de puntos (A, A')** está activada inicialmente para rotular puntos, extremos de rectas y vértices. Cada punto espacial conserva su letra: A en planta, A' en alzado y primas adicionales en las demás vistas. Después de Z se continúa con AA, AB… Los vértices coincidentes comparten letra; si distintos puntos coinciden en una proyección, se agrupan sus letras. La rotulación funciona con los trazos parciales y es independiente de los nombres de los objetos. Las curvas no rotulan los puntos de su discretización; en un cono sí se rotula el vértice.
 
 La disposición sigue el sistema europeo (primer diedro): planta bajo alzado, perfil derecho a su izquierda y perfil izquierdo a su derecha. Los dibujos mantienen una única escala; los SVG incorporan dimensiones físicas en milímetros. Referencia educativa: [Vistas en sistema europeo, EducaMadrid](https://www.educa2.madrid.org/web/curso_dibujo-tecnico/vistas-diedricas/-/visor/vistas-en-sistema-europeo).
 
@@ -94,9 +96,9 @@ Las opciones se aplican a SVG, PNG e impresión/PDF. Si la impresión añade fec
 
 ## Títulos y trazos parciales
 
-En **Lámina y exportar → Presentación**, desmarca **Títulos de las vistas** para quitar los rótulos «Alzado · frente», «Planta · arriba», perfiles y demás. El área de cada vista se ajusta al retirar su cabecera. Los nombres de los elementos se controlan con una casilla independiente.
+En **Lámina y exportar → Presentación**, activa **Títulos de las vistas** para mostrar los rótulos «Alzado · frente», «Planta · arriba», perfiles y demás. El área de cada vista se ajusta al retirar su cabecera. Los nombres de los elementos se controlan con una casilla independiente. **Marcos de las vistas** permite ocultar el rectángulo que envuelve cada vista; se conserva la escala, el encuadre y el recorte del dibujo. Afecta a la vista previa, SVG, PNG, impresión/PDF y generación múltiple.
 
-Activa **Rectas con trazos parciales** o **Planos con aristas parciales** para eliminar, en cada vista, los tramos que caen dentro de la proyección de otro plano. Se añaden huecos alrededor de los cruces entre líneas de elementos diferentes. **Separación en cruces** regula el margen adicional entre 0 y 10 mm de papel, con 4 mm iniciales. Las aristas aisladas se conservan completas y las esquinas del mismo plano se mantienen unidas.
+**Rectas con trazos parciales** y **Planos con aristas parciales** están activados inicialmente para eliminar, en cada vista, los tramos que caen dentro de la proyección de otro plano. Se añaden huecos alrededor de los cruces entre líneas de elementos diferentes. **Separación en cruces** regula el margen adicional entre 0 y 10 mm de papel, con 6 mm iniciales. Las aristas aisladas se conservan completas y las esquinas del mismo plano se mantienen unidas.
 
 Los extremos que quedan dentro de otro plano se representan con puntos. Una arista totalmente interior deja un punto en cada extremo; los vértices compartidos se dibujan una sola vez. Si ambos extremos coinciden en una vista de punta, se ve un único punto. Se conservan los tramos exteriores y se admiten varios intervalos de recorte en planos cóncavos.
 
@@ -118,6 +120,12 @@ Al pulsar **Generar** se prepara el lote y se muestra la vista previa, sin inici
 Activa **Forzar cruces y un único conjunto conectado** para exigir al menos dos elementos por lámina y formar una red de intersecciones en 3D. Cada elemento cruza al menos a otro y existe un camino entre cualesquiera dos: una cadena T1–T2–T3–T4 cumple la condición; dos parejas T1–T2 y T3–T4 separadas no. No se exige que todos crucen directamente con todos.
 
 Las intersecciones se comprueban contra segmentos y superficies finitos, incluyendo contornos cóncavos, polígonos, círculos y sólidos. Coincidir en una proyección sin compartir un punto espacial no cuenta. Se conservan dimensiones, colores y contornos de las plantillas y se modifican sus posiciones y orientaciones para conectar el conjunto. Si las dimensiones impiden una conexión válida, la generación muestra un error.
+
+### Vértices fuera de otros planos
+
+Activa **Vértices fuera de otros planos** en **Generar múltiples** para impedir que cualquier vértice o extremo quede dentro del contorno proyectado de otro plano en cualquiera de las vistas elegidas. Se comprueban los contornos finitos, incluidos los cóncavos y las circunferencias, y los vértices de rectas y sólidos. Los bordes se admiten y los planos de canto no generan interiores. Las aristas pueden cruzarse.
+
+La opción se puede combinar con **Forzar cruces y un único conjunto conectado**, **Recta infinita** y los trazos parciales. La geometría final se vuelve a comprobar tras prolongar las rectas y ajustar la escala. Se conservan cantidades, medidas, contornos y colores de las plantillas. Si no se encuentra una disposición válida tras los intentos acotados, se muestra un error para reducir los elementos o las vistas; nunca se entrega una lámina que incumpla la restricción.
 
 ### Recta infinita
 

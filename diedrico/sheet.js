@@ -49,6 +49,33 @@
     return{segments,points};
   }
   function partialSegments(scene,options={},scale=1){return partialGeometry(scene,options,scale).segments;}
+  const vertexKey=p=>p.map(v=>Math.round(v*1e6)).join(':');
+  function vertexLetters(entities){
+    const letters=new Map();
+    function letter(index){let out='';for(let i=index+1;i>0;i=Math.floor((i-1)/26))out=String.fromCharCode(65+(i-1)%26)+out;return out;}
+    for(const e of entities){const m=root.Geo.mesh(e);m.vertices.forEach((p,i)=>{if(m.curved&&!(e.type==='cone'&&i===m.vertices.length-1))return;const key=vertexKey(p);if(!letters.has(key))letters.set(key,letter(letters.size));});}
+    return letters;
+  }
+  function drawVertexLabels(scene,transform,options){
+    const G=root.Geo,letters=options.vertexLetters||vertexLetters(scene.meshes.map(m=>m.entity)),suffix={top:'',front:"'",right:"''",left:"'''",back:"''''",bottom:"'''''"}[options.viewKey]||'',groups=new Map(),bb=options.labelBounds;
+    const triangles=scene.meshes.filter(m=>!G.planar(m.entity)).flatMap(m=>m.faces.flatMap(f=>f.slice(1,-1).map((_,i)=>[m.p[f[0]],m.p[f[i+1]],m.p[f[i+2]]])));
+    for(const m of scene.meshes)m.p.forEach((p,i)=>{
+      const label=letters.get(vertexKey(m.vertices[i]));if(label===undefined)return;
+      const hidden=triangles.some(tri=>{const depth=G.depthAt(p,...tri);return depth!==null&&depth>p[2]+1e-5;});if(hidden&&options.hidden===false)return;
+      const q=transform(p),key=q.map(v=>Math.round(v*1e6)).join(':'),group=groups.get(key);
+      if(group){group.labels.add(label+suffix);group.hidden=group.hidden&&hidden;}
+      else groups.set(key,{q,labels:new Set([label+suffix]),entity:m.entity,hidden});
+    });
+    let out='';const placed=[];
+    for(const group of groups.values()){
+      const {q,entity,hidden}=group,text=[...group.labels].join(' / '),w=text.length*1.65,color=options.colors?G.textColor(entity.color,'#ffffff'):hidden?'#596559':'#263e33';
+      const clamp=([x,y])=>bb?[Math.max(bb.x+1.5,Math.min(bb.x+bb.w-w-1.5,x)),Math.max(bb.y+(bb.labelTop??3),Math.min(bb.y+bb.h-1.5,y))]:[x,y];
+      const candidates=[[q[0]+1.2,q[1]-1.2],[q[0]+1.2,q[1]+3.2],[q[0]-w-1.2,q[1]-1.2],[q[0]-w-1.2,q[1]+3.2]].map(clamp);
+      const [x,y]=candidates.find(([x,y])=>!placed.some(r=>x<r.x+r.w+.6&&x+w+.6>r.x&&y-2.8<r.y+.8&&y+.8>r.y-2.8))||candidates[0];placed.push({x,y,w});
+      out+=`<circle data-purpose="vertex-point" cx="${n(q[0])}" cy="${n(q[1])}" r=".45" fill="${color}"/><text data-purpose="vertex-label" data-entity="${esc(entity.id)}" x="${n(x)}" y="${n(y)}" font-size="2.7" fill="${color}" stroke="#fff" stroke-width=".8" stroke-linejoin="round" paint-order="stroke">${esc(text)}</text>`;
+    }
+    return out;
+  }
   function drawing(scene,transform,options={}){
     const {hidden=true,colors=false,labels=false,stroke=.28}=options,paths=new Map();let out='';
     const origin=transform([0,0,0]),unit=transform([1,0,0]),scale=Math.hypot(unit[0]-origin[0],unit[1]-origin[1]),geometry=options.partialLines||options.partialPlanes?partialGeometry(scene,options,scale):scene,segments=geometry.segments;
@@ -57,6 +84,7 @@
     for(const p of [...paths.values()].sort((a,b)=>Number(b.hidden)-Number(a.hidden)))out+=`<path data-entity="${esc(p.id)}" d="${p.d}" fill="none" stroke="${p.color}" stroke-width="${p.hidden?stroke*.65:stroke}"${p.hidden?' stroke-dasharray="1.5 1"':''} stroke-linejoin="round" stroke-linecap="round"/>`;
     for(const p of geometry.points){if(p.hidden&&!hidden)continue;const q=transform(p.p);out+=`<circle data-entity="${esc(p.entity.id)}"${p.kind?' data-purpose="interior-vertex"':''} cx="${n(q[0])}" cy="${n(q[1])}" r="${stroke*2}" fill="${colors?p.entity.color:p.hidden?'#7b817b':'#263e33'}"/>`;}
     if(labels){const placed=[],bb=options.labelBounds;for(const m of scene.meshes){const xs=m.p.map(p=>p[0]),ys=m.p.map(p=>p[1]),p=transform([Math.min(...xs),Math.min(...ys)]),label=m.entity.name.length>25?m.entity.name.slice(0,24)+'…':m.entity.name,w=label.length*1.4+1;let x=p[0]+1,y=p[1]-1.5;if(bb){x=Math.max(bb.x+2,Math.min(bb.x+bb.w-w-2,x));y=Math.max(bb.y+(bb.labelTop??11),Math.min(bb.y+bb.h-3,y));}for(let tries=0;tries<40&&placed.some(r=>x<r.x+r.w&&x+w>r.x&&y-3<r.y+1&&y>r.y-3);tries++)y+=4;if(bb&&y>bb.y+bb.h-2)continue;placed.push({x,y,w});out+=`<rect x="${n(x-.5)}" y="${n(y-2.8)}" width="${n(w)}" height="3.5" fill="#fff" fill-opacity=".9"/><text x="${n(x)}" y="${n(y)}" font-size="2.5" fill="${colors?root.Geo.textColor(m.entity.color,'#ffffff'):'#526657'}">${esc(label)}</text>`;}}
+    if(options.pointLabels)out+=drawVertexLabels(scene,transform,options);
     return out;
   }
   const defaultFooterNote=()=>[t('Sistema europeo'),t('Primer diedro'),t('Unidades: mm'),t('Diédrico 3D')].join(' · ');
@@ -78,8 +106,8 @@
     return{segments,mitres};
   }
   function create(doc,options){
-    const G=root.Geo,{format='a4',scale='auto',selected=null,onlySelected=false,grid=false,projectors=false,showFooter=true,footerDetails=true,showViewTitles=true}=options,header=showViewTitles?7:0;
-    const placements={right:[0,1],front:[1,1],left:[2,1],back:[3,1],top:[1,2],bottom:[1,0]},views=[...new Set(options.views||[])].filter(v=>v in placements);
+    const G=root.Geo,{format='a4',scale='auto',selected=null,onlySelected=false,grid=false,projectors=false,showFooter=false,footerDetails=true,showViewTitles=true,showViewFrames=true}=options,header=showViewTitles?7:0;
+    const placements={right:[0,1],front:[1,1],left:[2,1],back:[3,1],top:[1,2],bottom:[1,0]},views=[...new Set(options.views??['front','top'])].filter(v=>v in placements);
     const inputEntities=doc.entities.filter(e=>e.visible&&(!onlySelected||e.id===selected)),paper=format==='a3'?[420,297]:[297,210],lineMargin=options._lineMargin??8;
     if(!views.length)return{error:t('Selecciona al menos una vista.')};if(!inputEntities.length)return{error:t('No hay elementos visibles para esta lámina.')};
     let entities;try{entities=G.fitInfiniteLines(inputEntities,views,lineMargin);}catch(error){return{error:t(error.message)};}
@@ -99,12 +127,12 @@
     const cw=Object.fromEntries(Object.entries(cols).map(([c,w])=>[c,w*k+padX])),rh=Object.fromEntries(Object.entries(rows).map(([r,h])=>[r,h*k+padY]));
     let x=10+(W-totalW)/2,y=bodyTop+(H-totalH)/2;const xs={},ys={};for(let c=cmin;c<=cmax;c++){xs[c]=x;x+=cw[c]+gap;}for(let r=rmin;r<=rmax;r++){ys[r]=y;y+=rh[r]+gap;}
     const cells={};for(const key of views){const[c,r]=placements[key],b=bounds[key];cells[key]={x:xs[c],y:ys[r],w:cw[c],h:rh[r],cx:xs[c]+cw[c]/2,cy:ys[r]+(rh[r]+header)/2,b};}
-    const trans=key=>p=>[cells[key].cx+(p[0]-cells[key].b.center[0])*k,cells[key].cy+(p[1]-cells[key].b.center[1])*k];
+    const trans=key=>p=>[cells[key].cx+(p[0]-cells[key].b.center[0])*k,cells[key].cy+(p[1]-cells[key].b.center[1])*k],letters=options.pointLabels?vertexLetters(entities):null;
     let defs='',content='';
     for(const key of views){const c=cells[key],clipTop=c.y+(showViewTitles?7:1);defs+=`<clipPath id="clip-${key}"><rect x="${n(c.x+1)}" y="${n(clipTop)}" width="${n(c.w-2)}" height="${n(c.y+c.h-1-clipTop)}"/></clipPath>`;
-      content+=`<g data-view="${key}"><rect x="${n(c.x)}" y="${n(c.y)}" width="${n(c.w)}" height="${n(c.h)}" fill="none" stroke="#dfe5df" stroke-width=".16"/>${showViewTitles?`<rect x="${n(c.x+.2)}" y="${n(c.y+.2)}" width="${n(c.w-.4)}" height="6.5" fill="#fff"/><text data-purpose="view-title" x="${n(c.x+3)}" y="${n(c.y+4.5)}" font-size="2.8" fill="#526657">${t(G.VIEW_NAMES[key])}</text>`:''}<g clip-path="url(#clip-${key})">`;
+      content+=`<g data-view="${key}">${showViewFrames?`<rect data-purpose="view-frame" x="${n(c.x)}" y="${n(c.y)}" width="${n(c.w)}" height="${n(c.h)}" fill="none" stroke="#dfe5df" stroke-width=".16"/>`:''}${showViewTitles?`<rect x="${n(c.x+.2)}" y="${n(c.y+.2)}" width="${n(c.w-.4)}" height="6.5" fill="#fff"/><text data-purpose="view-title" x="${n(c.x+3)}" y="${n(c.y+4.5)}" font-size="2.8" fill="#526657">${t(G.VIEW_NAMES[key])}</text>`:''}<g clip-path="url(#clip-${key})">`;
       if(grid){const step=doc.grid*k;if(step>=1){let d='';const zero=trans(key)([0,0]);for(let gx=c.x+((zero[0]-c.x)%step+step)%step;gx<c.x+c.w;gx+=step)d+=`M${n(gx)} ${n(clipTop)}V${n(c.y+c.h)}`;for(let gy=clipTop+((zero[1]-clipTop)%step+step)%step;gy<c.y+c.h;gy+=step)d+=`M${n(c.x)} ${n(gy)}H${n(c.x+c.w)}`;content+=`<path d="${d}" stroke="#e8ece7" stroke-width=".12" fill="none"/>`;}}
-      content+=drawing(scenes[key],trans(key),{...options,labelBounds:{...c,labelTop:showViewTitles?11:3}})+'</g></g>';
+      content+=drawing(scenes[key],trans(key),{...options,viewKey:key,vertexLetters:letters,labelBounds:{...c,labelTop:showViewTitles?11:3}})+'</g></g>';
     }
     const guides=projectors?correspondenceGuides(entities,views,trans):{segments:[],mitres:[]};
     if(projectors){const path=segments=>segments.map(s=>`M${n(s.a[0])} ${n(s.a[1])}L${n(s.b[0])} ${n(s.b[1])}`).join('');defs+=`<clipPath id="clip-correspondences"><rect x="10" y="${bodyTop}" width="${W}" height="${n(H)}"/></clipPath>`;content=`<g data-purpose="correspondences" clip-path="url(#clip-correspondences)"><path data-kind="projectors" d="${path(guides.segments)}" fill="none" stroke="#7b9382" stroke-width=".13" stroke-dasharray="1.2 1"/><path data-kind="mitres" d="${path(guides.mitres)}" fill="none" stroke="#668270" stroke-width=".16"/></g>`+content;}
